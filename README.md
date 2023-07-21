@@ -24,7 +24,7 @@ The all project was coded under PEP-8 (https://peps.python.org/pep-0008/) and fl
 
 ## Screenshot
 
-![alt text]()
+![alt text](https://raw.githubusercontent.com/HippolyteGuigon/Deepl_reproduction/main/ressources/logo.webp)
 
 
 ## How to use ?
