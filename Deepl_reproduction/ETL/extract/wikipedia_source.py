@@ -1,7 +1,7 @@
 import wikipedia 
 from typing import List
 
-def get_wikipedia_article(keyword: str , language:str="fr")->List[str]:
+def get_wikipedia_article(language:str="fr", random=True, **kwargs)->List[str]:
     """
     The goal of this function is to 
     retrieve a all wikipedia article 
@@ -10,9 +10,10 @@ def get_wikipedia_article(keyword: str , language:str="fr")->List[str]:
     Arguemnts:
         -keyword: str: The keyword used
         for searching a wikipedia article
-        -language: str: The wikipedia version
-        in which the given keyword will have to
-        be searched
+        -random: bool: Whether or not the 
+        wikipedia article should be chosen
+        randomly
+        -**kwargs: dict: Optional argument
     Returns:
         -summary: str: The summary of the article
         -article: str: The all article
@@ -20,8 +21,13 @@ def get_wikipedia_article(keyword: str , language:str="fr")->List[str]:
 
     wikipedia.set_lang(language)
 
-    search=wikipedia.search(keyword)
-    summary=wikipedia.summary(search[0])
-    content=wikipedia.page(search[0]).content
+    if random:
+        random_page = wikipedia.random(pages=1)
+        page=random_page
+        content=wikipedia.page(page).content
+    else:
+        search=wikipedia.search(kwargs["keyword"])
+        page=search[0]
+        content=wikipedia.page(page).content
 
-    return summary, content
+    return page, content
