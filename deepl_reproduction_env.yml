@@ -1,0 +1,4 @@
+name: deepl_reproduction_env
+channels:
+  - defaults
+prefix: /Users/hippolyteguigon/mambaforge/envs/deepl_reproduction_env
