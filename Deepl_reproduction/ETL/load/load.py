@@ -2,11 +2,10 @@ import logging
 import os
 import db_dtypes
 import pandas as pd 
+import pandera as pa
 from google.cloud import bigquery
 from Deepl_reproduction.ETL.extract.wikipedia_source import get_wikipedia_article
 from Deepl_reproduction.logs.logs import main
-
-project="deepl-reproduction"
 
 client = bigquery.Client()
 
@@ -18,13 +17,24 @@ main()
 
 sql_query = '''
 SELECT
-  DISTINCT page_name
+  *
 FROM
   `deepl-reprodution.raw_data.raw_wikipedia`
 '''
 
+schema_wikipedia_raw = pa.DataFrameSchema(
+    {
+        "page_name": pa.Column(pa.String, nullable=False),
+        "content": pa.Column(pa.String, nullable=False),
+    }
+)
+
 query_job = client.query(sql_query)
-unique_page = query_job.to_dataframe().page_name.to_list()
+all_dataframe=query_job.to_dataframe()
+unique_page = all_dataframe.page_name.to_list()
+
+schema_wikipedia_raw.validate(all_dataframe)
+logging.info("Schema was validated for the all dataframe")
 
 def load_data(data, project_id="deepl-reproduction", dataset_id="raw_data", table_name="raw_wikipedia", client=bigquery.Client()) -> None:
     table_ref=client.dataset(dataset_id).table(table_name)
@@ -35,6 +45,9 @@ def load_data(data, project_id="deepl-reproduction", dataset_id="raw_data", tabl
 if __name__=="__main__":
     page, content=get_wikipedia_article()
     data=[{"page_name":page, "content":content}]
+    df_wikipedia=pd.DataFrame(data)
+    schema_wikipedia_raw.validate(df_wikipedia)
+
     if page not in unique_page:
         load_data(data)
     else:
