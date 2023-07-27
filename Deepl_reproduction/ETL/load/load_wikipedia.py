@@ -23,8 +23,9 @@ FROM
 '''
 
 schema_wikipedia_raw = pa.DataFrameSchema(
-    {
+    {   
         "page_name": pa.Column(pa.String, nullable=False),
+        "page_name_id": pa.Column(pa.Int, nullable=False),
         "content": pa.Column(pa.String, nullable=False),
     }
 )
@@ -35,6 +36,27 @@ unique_page = all_dataframe.page_name.to_list()
 
 schema_wikipedia_raw.validate(all_dataframe)
 logging.info("Schema was validated for the all dataframe")
+
+def indexing(data: pd.DataFrame)->pd.DataFrame:
+    """
+    The goal of this funcction is, 
+    once the data are loaded, to 
+    index the DataFrame accordingly 
+    and have one row per sentence
+    
+    Arguments:
+        -data: pd.DataFrame: The 
+        DataFrame with wikipedia data
+    Returns:
+        -indexed_dataframe: pd.DataFrame:
+        The indexed dataframe
+    """
+
+    data["page_name_id"]=data["content"].apply(lambda content_list: list(range(1,len(content_list)+1)))
+    indexed_dataframe=data.explode(["page_name_id","content"])
+    indexed_dataframe=indexed_dataframe[["page_name","page_name_id", "content"]]
+
+    return indexed_dataframe
 
 def load_data(data, project_id="deepl-reproduction", dataset_id="raw_data", table_name="raw_wikipedia", client=bigquery.Client()) -> None:
     table_ref=client.dataset(dataset_id).table(table_name)
