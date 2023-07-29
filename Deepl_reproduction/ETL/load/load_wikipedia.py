@@ -111,7 +111,6 @@ if __name__=="__main__":
     df_wikipedia=indexing(df_wikipedia)
     schema_wikipedia_cleaned.validate(df_wikipedia)    
 
-    df_wikipedia.to_csv("whats_wrong.csv",index=False)
     if page not in unique_page:
         load_raw_data(data)
         for _, row in df_wikipedia.iterrows():
