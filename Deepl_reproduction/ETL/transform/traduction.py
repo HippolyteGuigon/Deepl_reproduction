@@ -6,7 +6,7 @@ main_params = clean_params(main_params)
 
 API_KEY=main_params["API_KEY"]
 
-def translate_text(text: str, source_lang: str, target_lang: str, api_key: str=API_KEY)->str:
+def translate_text(text: str, target_lang: str, api_key: str=API_KEY)->str:
     """
     The goal of this function is to
     translate a given sentence from 
@@ -28,13 +28,10 @@ def translate_text(text: str, source_lang: str, target_lang: str, api_key: str=A
     data={
         "auth_key":api_key,
         "text": text,
-        "source_lang": source_lang,
         "target_lang": target_lang
     }
-
     response = requests.post(url,data=data)
     response_data=response.json()
-
     translation=response_data["translations"][0]["text"]
 
     return translation

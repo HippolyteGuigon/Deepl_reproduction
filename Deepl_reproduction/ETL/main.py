@@ -5,7 +5,7 @@ import pandas as pd
 import pandera as pa
 from google.cloud import bigquery
 from Deepl_reproduction.ETL.load.load_wikipedia import indexing, load_raw_data, load_processed_data
-from Deepl_reproduction.ETL.transform.transform_wikipedia import treat_article
+from Deepl_reproduction.ETL.transform.transform_wikipedia import treat_article, translate_content
 from Deepl_reproduction.ETL.extract.wikipedia_source import get_wikipedia_article
 from Deepl_reproduction.logs.logs import main
 
@@ -31,6 +31,7 @@ schema_wikipedia_cleaned = pa.DataFrameSchema(
         "page_name": pa.Column(pa.String, nullable=False),
         "page_name_id": pa.Column(pa.Int, nullable=False),
         "content": pa.Column(pa.String, nullable=False),
+        "content_translated" : pa.Column(pa.String, nullable=False),
     }
 )
 
@@ -55,11 +56,12 @@ df_wikipedia=pd.DataFrame(data)
 schema_wikipedia_raw.validate(df_wikipedia)
 df_wikipedia["content"]=df_wikipedia["content"].apply(lambda article: treat_article(article))
 df_wikipedia=indexing(df_wikipedia)
+df_wikipedia=translate_content(df_wikipedia)
 schema_wikipedia_cleaned.validate(df_wikipedia)    
 
 if page not in unique_page:
     load_raw_data(data)
     for _, row in df_wikipedia.iterrows():
-        load_processed_data([{"page_name":row["page_name"], "page_name_id":row["page_name_id"],"content":row["content"]}])
+        load_processed_data([{"page_name":row["page_name"], "page_name_id":row["page_name_id"],"content":row["content"], "content_translated":row["content_translated"]}])
 else:
     logging.info(f"The page {page} was already in the database and was skipped")

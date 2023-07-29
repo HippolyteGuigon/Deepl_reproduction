@@ -19,7 +19,8 @@ def create_wikipedia_table(client=client)->None:
     (
     page_name STRING,
     page_name_id INT64,
-    content STRING
+    content STRING,
+    content_translated STRING
     );
     '''
 
