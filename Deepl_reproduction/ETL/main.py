@@ -4,10 +4,11 @@ import db_dtypes
 import pandas as pd 
 import pandera as pa
 from google.cloud import bigquery
+
 from load.load_wikipedia import indexing, load_raw_data, load_processed_data
 from transform.transform_wikipedia import treat_article, translate_content
 from extract.wikipedia_source import get_wikipedia_article
-#from Deepl_reproduction.logs.logs import main
+from Deepl_reproduction.logs.logs import main
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="deepl_api_key.json"
 
@@ -17,7 +18,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
-#main()
+main()
 
 def wikipedia_etl():
     sql_query = '''

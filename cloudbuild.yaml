@@ -1,4 +1,14 @@
 steps:
+  # Étape 1: Construire l'image Docker
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/deepl-reprodution/wikipedia-etl-image:latest', '-f', 'Deepl_reproduction/ETL/Dockerfile', '.']
+
+
+  # Étape 2: Poussez l'image vers Google Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/deepl-reprodution/wikipedia-etl-image:latest']
+
+  # Étape 3: Déploiement de la Cloud Function à partir de l'image Docker
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'functions'
@@ -8,8 +18,11 @@ steps:
       - 'python39'  
       - '--trigger-http'
       - '--entry-point'
-      - 'wikipedia_etl'  
-      - '--source=Deepl_reproduction/ETL' 
+      - 'wikipedia_etl'
+      - '--source'
+      - 'Deepl_reproduction/ETL'  
       - '--region'
-      - 'us-central1'
+      - 'us-central1'  
       - '--allow-unauthenticated'
+      - '--image'
+      - 'gcr.io/my-project-id/wikipedia-etl-image:latest'  # Utilisez ici l'URL complète de votre image
