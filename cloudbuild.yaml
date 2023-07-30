@@ -14,4 +14,4 @@ steps:
       - '--region'
       - 'us-central1'  
       - '--allow-unauthenticated' 
-      - '--source=./requirements.txt'
+      - '--source=.'
