@@ -66,3 +66,6 @@ def wikipedia_etl():
             load_processed_data([{"page_name":row["page_name"], "page_name_id":row["page_name_id"],"content":row["content"], "content_translated":row["content_translated"]}])
     else:
         logging.info(f"The page {page} was already in the database and was skipped")
+
+if __name__=="__main__":
+    wikipedia_etl()
