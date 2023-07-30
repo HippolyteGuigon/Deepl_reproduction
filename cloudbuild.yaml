@@ -1,7 +1,8 @@
 steps:
   # Étape 1: Construire l'image Docker
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/deepl-reprodution/wikipedia-etl-image:latest', '.']
+    args: ['build', '-t', 'gcr.io/deepl-reprodution/wikipedia-etl-image:latest', '-f', 'Deepl_reproduction/ETL/Dockerfile', '.']
+
 
   # Étape 2: Poussez l'image vers Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'
