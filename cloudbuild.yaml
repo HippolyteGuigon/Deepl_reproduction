@@ -1,18 +1,27 @@
 steps:
-  - name: 'gcr.io/cloud-builders/git'
-    args: ['clone', 'https://github.com/HippolyteGuigon/Deepl_reproduction.git']
+  # Étape 1: Construire l'image Docker
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/my-project-id/wikipedia-etl-image:latest', '.']
+
+  # Étape 2: Poussez l'image vers Google Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/my-project-id/wikipedia-etl-image:latest']
+
+  # Étape 3: Déploiement de la Cloud Function à partir de l'image Docker
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'functions'
       - 'deploy'
       - 'my-cloud-function'
       - '--runtime'
-      - 'python3.9'  
+      - 'python39'  
       - '--trigger-http'
       - '--entry-point'
-      - 'wikipedia_etl'  
+      - 'wikipedia_etl'
       - '--source'
-      - 'Deepl-reproduction/ETL'  
+      - 'Deepl_reproduction/ETL'  
       - '--region'
       - 'us-central1'  
-      - '--allow-unauthenticated' 
+      - '--allow-unauthenticated'
+      - '--image'
+      - 'gcr.io/my-project-id/wikipedia-etl-image:latest'  # Utilisez ici l'URL complète de votre image
