@@ -9,6 +9,9 @@ import pandas as pd
 import wikipedia 
 from typing import List 
 from google.cloud import bigquery
+from flask import Flask, request
+
+app = Flask(__name__)
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="deepl_api_key.json"
 
@@ -72,7 +75,7 @@ def load_processed_data(data, project_id="deepl-reproduction", dataset_id="proce
     table_ref=client.dataset(dataset_id).table(table_name)
     client.insert_rows_json(table_ref, data)
     logging.info(f"Processed data were successfully pushed in dataset {dataset_id} in table {table_name}")
-    
+
 def get_wikipedia_article(language:str="fr", random=True, **kwargs)->List[str]:
     """
     The goal of this function is to 
@@ -160,6 +163,7 @@ def translate_content(df: pd.DataFrame, input_language: str="fr", output_languag
     df["content_translated"]=df["content"].apply(lambda texte: translate_text(text=texte, source_lang=input_language, target_lang=output_language))
     return df
 
+@app.route('/', methods=['POST'])
 def wikipedia_etl():
     sql_query = '''
     SELECT
@@ -207,3 +211,5 @@ def wikipedia_etl():
             load_processed_data([{"page_name":row["page_name"], "page_name_id":row["page_name_id"],"content":row["content"], "content_translated":row["content_translated"]}])
     else:
         logging.info(f"The page {page} was already in the database and was skipped")
+
+    return "Success"
