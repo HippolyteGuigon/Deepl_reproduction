@@ -12,7 +12,6 @@ from Deepl_reproduction.logs.logs import main
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="deepl_api_key.json"
 
 logging.warning(f"You are here: {os.getcwd()}")
-
 client = bigquery.Client()
 
 logger = logging.getLogger()
