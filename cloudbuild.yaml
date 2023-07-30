@@ -1,4 +1,10 @@
 steps:
+
+  - name: 'gcr.io/cloud-builders/gcloud'  
+    entrypoint: 'bash'  
+    args:
+      - '-c'
+      - 'python3 setup.py install' 
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'functions'
@@ -9,7 +15,8 @@ steps:
       - '--trigger-http'
       - '--entry-point'
       - 'wikipedia_etl'  
-      - '--source=Deepl_reproduction/ETL' 
+      - '--source'
+      - 'Deepl_reproduction/ETL'  
       - '--region'
-      - 'us-central1'
-      - '--allow-unauthenticated'
+      - 'us-central1'  
+      - '--allow-unauthenticated' 
