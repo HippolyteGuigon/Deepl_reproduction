@@ -8,9 +8,10 @@ steps:
       - 'python39'  
       - '--trigger-http'
       - '--entry-point'
-      - 'wikipedia_etl'  # Remplacez par le nom de la fonction à exécuter
+      - 'wikipedia_etl'  
       - '--source'
-      - 'Deepl_reproduction/ETL/main.py'  # Remplacez par le chemin relatif vers le répertoire contenant votre fonction
+      - 'Deepl_reproduction/ETL'  
       - '--region'
-      - 'us-central1'  # Remplacez par la région de votre choix
-      - '--allow-unauthenticated'  # Cette option permet aux utilisateurs non authentifiés d'appeler votre fonction
+      - 'us-central1'  
+      - '--allow-unauthenticated' 
+      - '--source=./requirements.txt'
