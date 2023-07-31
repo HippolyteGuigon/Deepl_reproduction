@@ -1,5 +1,11 @@
 steps:
-
+  - name: 'python:3.9'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+          export PYTHONPATH="${PYTHONPATH}:/workspace/Deepl_reproduction"
+          python3 main.py
   - name: 'python:3.9'  # Remplacez par la version de Python appropriée
     entrypoint: 'pip3'
     args: ['install', '-r', 'requirements.txt']
