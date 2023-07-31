@@ -6,12 +6,8 @@ steps:
 
   # Étape 2 : Exécution de la Cloud Function
   - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        export PYTHONPATH=$PYTHONPATH:/workspace
-        python3 Deepl_reproduction/ETL/main.py
-    dir: 'Deepl_reproduction'  # Spécifiez le répertoire de travail pour le déploiement de la Cloud Function.
+    entrypoint: 'python3'
+    args: ['Deepl_reproduction/ETL/main.py']
+    dir: '.'  # Spécifiez le répertoire de travail pour le déploiement de la Cloud Function.
 
 timeout: '1600s'  # Augmentez le timeout si nécessaire, en fonction de la taille de votre projet et du temps d'exécution.
