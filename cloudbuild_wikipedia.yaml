@@ -1,0 +1,3 @@
+steps:
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['functions', 'deploy', 'python39', '--runtime', 'python39', '--trigger-http', '--allow-unauthenticated', '--entry-point', 'wikipedia_etl_pipeline', '--source=Deepl_reproduction/ETL']

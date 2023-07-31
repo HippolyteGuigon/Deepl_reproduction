@@ -31,12 +31,12 @@ main_params=load_conf("configs/main.yml", include=True)
 deepl_api_key=main_params["deepl"]["API_KEY"]
 
 @functions_framework.http
-def wikipedia_etl(request):
+def wikipedia_etl_pipeline(request):
     sql_query = '''
     SELECT
-    *
+        *
     FROM
-    `deepl-reprodution.raw_data.raw_wikipedia`
+        `deepl-reprodution.raw_data.raw_wikipedia`
     '''
 
     schema_wikipedia_cleaned = pa.DataFrameSchema(
