@@ -6,6 +6,6 @@ steps:
 
   # Étape 2 : Exécution de la Cloud Function
   - name: 'gcr.io/cloud-builders/gcloud'
-    args: ['functions', 'deploy', 'python39', '--runtime', 'python39', '--trigger-http', '--allow-unauthenticated', '--entry-point', 'wikipedia_etl', '--source', '.']
+    args: ['functions', 'deploy', 'python39', '--runtime', 'python39', '--trigger-http', '--allow-unauthenticated', '--entry-point', 'wikipedia_etl', '--source=Deepl_reproduction/ETL', '.']
 
 timeout: '1600s'  # Augmentez le timeout si nécessaire, en fonction de la taille de votre projet et du temps d'exécution.
