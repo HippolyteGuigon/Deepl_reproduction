@@ -196,21 +196,21 @@ def wikipedia_etl(request):
     schema_wikipedia_raw.validate(all_dataframe)
     logging.info("Schema was validated for the all dataframe")
 
+    for _ in range(15):
+        page, content=get_wikipedia_article()
+        data=[{"page_name":page, "content":content}]
+        df_wikipedia=pd.DataFrame(data)
+        schema_wikipedia_raw.validate(df_wikipedia)
+        df_wikipedia["content"]=df_wikipedia["content"].apply(lambda article: treat_article(article))
+        df_wikipedia=indexing(df_wikipedia)
+        df_wikipedia=translate_content(df_wikipedia)
+        schema_wikipedia_cleaned.validate(df_wikipedia)    
 
-    page, content=get_wikipedia_article()
-    data=[{"page_name":page, "content":content}]
-    df_wikipedia=pd.DataFrame(data)
-    schema_wikipedia_raw.validate(df_wikipedia)
-    df_wikipedia["content"]=df_wikipedia["content"].apply(lambda article: treat_article(article))
-    df_wikipedia=indexing(df_wikipedia)
-    df_wikipedia=translate_content(df_wikipedia)
-    schema_wikipedia_cleaned.validate(df_wikipedia)    
-
-    if page not in unique_page:
-        load_raw_data(data)
-        for _, row in df_wikipedia.iterrows():
-            load_processed_data([{"page_name":row["page_name"], "page_name_id":row["page_name_id"],"content":row["content"], "content_translated":row["content_translated"]}])
-    else:
-        logging.info(f"The page {page} was already in the database and was skipped")
+        if page not in unique_page:
+            load_raw_data(data)
+            for _, row in df_wikipedia.iterrows():
+                load_processed_data([{"page_name":row["page_name"], "page_name_id":row["page_name_id"],"content":row["content"], "content_translated":row["content_translated"]}])
+        else:
+            logging.info(f"The page {page} was already in the database and was skipped")
 
     return "Success"
