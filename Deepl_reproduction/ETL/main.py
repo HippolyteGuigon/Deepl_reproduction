@@ -191,7 +191,7 @@ def wikipedia_etl(request):
     schema_wikipedia_raw.validate(all_dataframe)
     logging.info("Schema was validated for the all dataframe")
 
-    for _ in range(15):
+    for _ in range(5):
         page, content=get_wikipedia_article()
         data=[{"page_name":page, "content":content}]
         df_wikipedia=pd.DataFrame(data)
