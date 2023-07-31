@@ -25,6 +25,6 @@ def treat_article(article: str)->List[str]:
 
     return modified_article
 
-def translate_content(df: pd.DataFrame, input_language: str="fr", output_language: str="en")->pd.DataFrame:
-    df["content_translated"]=df["content"].apply(lambda texte: translate_text(text=texte, source_lang=input_language, target_lang=output_language))
+def translate_content(df: pd.DataFrame, output_language: str="en")->pd.DataFrame:
+    df["content_translated"]=df["content"].apply(lambda texte: translate_text(text=texte, target_lang=output_language))
     return df
