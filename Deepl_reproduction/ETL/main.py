@@ -7,6 +7,7 @@ import requests
 import re 
 import pandas as pd
 import wikipedia 
+import deepl
 from typing import List 
 from google.cloud import bigquery
 from flask import Flask, request
@@ -23,7 +24,7 @@ logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
 
-API_KEY="a820230f-c24d-4bd8-2023-be64c946b6cb:fx"
+API_KEY="59091169-a8eb-9609-b264-4cebdbf06970"
 
 def indexing(data: pd.DataFrame)->pd.DataFrame:
     """
@@ -125,16 +126,10 @@ def translate_text(text: str, target_lang: str, api_key: str=API_KEY)->str:
         -translation: str: The translated_language
     """
 
-    url = "https://api-free.deepl.com/v2/translate"
+    translator = deepl.Translator(API_KEY)
 
-    data={
-        "auth_key":api_key,
-        "text": text,
-        "target_lang": target_lang
-    }
-    response = requests.post(url,data=data)
-    response_data=response.json()
-    translation=response_data["translations"][0]["text"]
+    result = translator.translate_text(text, target_lang=target_lang) 
+    translation = result.text
 
     return translation
 
@@ -160,7 +155,7 @@ def treat_article(article: str)->List[str]:
 
     return modified_article
 
-def translate_content(df: pd.DataFrame, input_language: str="fr", output_language: str="en")->pd.DataFrame:
+def translate_content(df: pd.DataFrame, output_language: str="EN-GB")->pd.DataFrame:
     df["content_translated"]=df["content"].apply(lambda texte: translate_text(text=texte, target_lang=output_language))
     return df
 
