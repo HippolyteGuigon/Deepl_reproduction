@@ -1,7 +1,7 @@
 steps:
   # Étape 1 : Installation des dépendances
-  - name: 'python:3.7'  # Remplacez par la version de Python appropriée
-    entrypoint: 'pip'
+  - name: 'python:3.9'  # Remplacez par la version de Python appropriée
+    entrypoint: 'pip3'
     args: ['install', '-r', 'requirements.txt']  # Assurez-vous d'avoir un fichier requirements.txt à la racine de votre repository avec les dépendances nécessaires.
 
   # Étape 2 : Exécution de la Cloud Function
