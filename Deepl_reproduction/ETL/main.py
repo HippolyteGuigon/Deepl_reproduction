@@ -12,10 +12,10 @@ import functions_framework
 from typing import List 
 from google.cloud import bigquery
 from flask import Flask, request
-from Deepl_reproduction.configs.confs import load_conf, clean_params
-from Deepl_reproduction.ETL.extract.wikipedia_source import get_wikipedia_article
-from Deepl_reproduction.ETL.transform.transform_wikipedia import treat_article, translate_content
-from Deepl_reproduction.ETL.load.load_wikipedia import indexing, load_raw_data, load_processed_data
+from ..configs.confs import load_conf, clean_params
+from extract.wikipedia_source import get_wikipedia_article
+from transform.transform_wikipedia import treat_article, translate_content
+from load.load_wikipedia import indexing, load_raw_data, load_processed_data
 
 app = Flask(__name__)
 

@@ -4,9 +4,9 @@ import db_dtypes
 import pandas as pd 
 import pandera as pa
 from google.cloud import bigquery
-from Deepl_reproduction.ETL.transform.transform_wikipedia import treat_article, translate_content
-from Deepl_reproduction.ETL.extract.wikipedia_source import get_wikipedia_article
-from Deepl_reproduction.logs.logs import main
+from ..transform.transform_wikipedia import treat_article, translate_content
+from ..extract.wikipedia_source import get_wikipedia_article
+from ...logs.logs import main
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="deepl_api_key.json"
 

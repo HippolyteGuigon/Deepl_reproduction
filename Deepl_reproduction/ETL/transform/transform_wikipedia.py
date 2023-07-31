@@ -1,7 +1,7 @@
 import re 
 import pandas as pd
 from typing import List 
-from Deepl_reproduction.ETL.transform.traduction import translate_text
+from traduction import translate_text
 
 def treat_article(article: str)->List[str]:
     """
