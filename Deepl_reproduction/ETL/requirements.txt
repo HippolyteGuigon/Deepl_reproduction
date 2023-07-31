@@ -2,6 +2,7 @@ db_dtypes==1.1.1
 deepl==1.15.0
 Flask==2.3.2
 functions_framework==3.4.0
+google-cloud-bigquery==3.11.4
 pandas==2.0.0
 pandera==0.16.1
 protobuf==4.23.4
