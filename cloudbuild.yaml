@@ -1,9 +1,3 @@
 steps:
-  - name: 'python:3.7'  # Remplacez par la version de Python appropriée
-    entrypoint: 'python'
-    args: ['setup.py', 'install']
-
-  # Ajoutez d'autres étapes ici si nécessaire, par exemple, la création d'une image Docker si vous en avez besoin.
-
   - name: 'gcr.io/cloud-builders/gcloud'
     args: ['functions', 'deploy', 'python39', '--runtime', 'python39', '--trigger-http', '--allow-unauthenticated', '--entry-point', 'wikipedia_etl', '--source=Deepl_reproduction/ETL']
