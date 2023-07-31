@@ -10,6 +10,7 @@ import wikipedia
 from typing import List 
 from google.cloud import bigquery
 from flask import Flask, request
+import functions_framework
 
 app = Flask(__name__)
 
@@ -163,8 +164,8 @@ def translate_content(df: pd.DataFrame, input_language: str="fr", output_languag
     df["content_translated"]=df["content"].apply(lambda texte: translate_text(text=texte, source_lang=input_language, target_lang=output_language))
     return df
 
-@app.route('/', methods=['POST'])
-def wikipedia_etl():
+@functions_framework.http
+def wikipedia_etl(request):
     sql_query = '''
     SELECT
     *
