@@ -1,6 +1,5 @@
 import logging
 import os
-import sys          
 import db_dtypes
 import pandas as pd 
 import pandera as pa
@@ -14,14 +13,11 @@ from typing import List
 from google.cloud import bigquery
 from flask import Flask, request
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-root_dir = os.path.abspath(os.path.join(current_dir, '..'))
-sys.path.append(root_dir)
 
-from configs.confs import load_conf, clean_params
-from ETL.extract.wikipedia_source import get_wikipedia_article
-from ETL.transform.transform_wikipedia import treat_article, translate_content
-from ETL.load.load_wikipedia import indexing, load_raw_data, load_processed_data
+from Deepl_reproduction.configs.confs import load_conf, clean_params
+from Deepl_reproduction.ETL.extract.wikipedia_source import get_wikipedia_article
+from Deepl_reproduction.ETL.transform.transform_wikipedia import treat_article, translate_content
+from Deepl_reproduction.ETL.load.load_wikipedia import indexing, load_raw_data, load_processed_data
 
 app = Flask(__name__)
 

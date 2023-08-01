@@ -1,13 +1,18 @@
 steps:
-  # Étape 1 : Installation des dépendances
+  # Étape 1 : Cloner le repository GitHub
+  - name: 'gcr.io/cloud-builders/git'
+    args: ['clone', 'https://github.com/HippolyteGuigon/Deepl_reproduction.git', 'Deepl_reproduction']
+    dir: '/workspace'
+
+  # Étape 2 : Installation des dépendances
   - name: 'python:3.9'  # Remplacez par la version de Python appropriée
     entrypoint: 'pip3'
-    args: ['install', '-r', 'requirements.txt']  # Assurez-vous d'avoir un fichier requirements.txt à la racine de votre repository avec les dépendances nécessaires.
-
-  # Étape 2 : Exécution de la Cloud Function
+    args: ['install', '-r', 'requirements.txt']
+    dir: '/workspace'
+  
+  # Étape 3 : Exécution de la Cloud Function
   - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'python3'
-    args: ['Deepl_reproduction/ETL/main.py']
-    dir: '.'  # Spécifiez le répertoire de travail pour le déploiement de la Cloud Function.
+    entrypoint: 'gcloud'
+    args: ['functions', 'deploy', 'python39', '--runtime', 'python39', '--trigger-http', '--allow-unauthenticated', '--entry-point', 'wikipedia_etl_pipeline', '--source', 'Deepl_reproduction/ETL']
 
-timeout: '1600s'  # Augmentez le timeout si nécessaire, en fonction de la taille de votre projet et du temps d'exécution.
+timeout: '3200s'  # Augmentez le timeout si nécessaire, en fonction de la taille de votre projet et du temps d'exécution.
