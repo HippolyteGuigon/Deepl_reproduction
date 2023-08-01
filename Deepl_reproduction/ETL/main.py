@@ -1,5 +1,7 @@
 import logging
 import os
+logging.warning("IIIIIIIIIIICIIIIIII", os.getcwd())
+logging.warning("ICIIIIIIIIII",os.listdir(os.path.dirname(os.getcwd())))
 import db_dtypes
 import pandas as pd 
 import pandera as pa
