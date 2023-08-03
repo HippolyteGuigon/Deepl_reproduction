@@ -1,7 +1,5 @@
 import logging
 import os
-logging.warning("IIIIIIIIIIICIIIIIII", os.getcwd())
-logging.warning("ICIIIIIIIIII",os.listdir(os.path.dirname(os.getcwd())))
 import db_dtypes
 import pandas as pd 
 import pandera as pa
@@ -14,7 +12,6 @@ import functions_framework
 from typing import List 
 from google.cloud import bigquery
 from flask import Flask, request
-
 
 from Deepl_reproduction.configs.confs import load_conf, clean_params
 from Deepl_reproduction.ETL.extract.wikipedia_source import get_wikipedia_article
@@ -84,6 +81,3 @@ def wikipedia_etl_pipeline(request):
             logging.info(f"The page {page} was already in the database and was skipped")
 
     return "Success"
-
-if __name__=="__main__":
-    wikipedia_etl(request)
