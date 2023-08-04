@@ -17,6 +17,7 @@ import sys
 deepl_reproduction_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..."))
 sys.path.append(deepl_reproduction_path)
 
+logging.warning("ADDED_PATH !!!!", deepl_reproduction_path)
 from Deepl_reproduction.configs.confs import load_conf, clean_params
 from Deepl_reproduction.ETL.extract.wikipedia_source import get_wikipedia_article
 from Deepl_reproduction.ETL.transform.transform_wikipedia import treat_article, translate_content
