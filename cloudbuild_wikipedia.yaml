@@ -10,5 +10,5 @@ steps:
          "--runtime", "python310",
          "--trigger-http",
          "--entry-point", "wikipedia_etl_pipeline",
-         "--source", "workspace/Deepl_reproduction/ETL/main.py"]
+         "--source", "workspace/Deepl_reproduction/ETL"]
   dir: "/workspace"

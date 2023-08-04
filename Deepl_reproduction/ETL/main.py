@@ -31,7 +31,6 @@ formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 main_params=load_conf("configs/main.yml", include=True)
 deepl_api_key=main_params["deepl"]["API_KEY"]
 
-@functions_framework.http
 def wikipedia_etl_pipeline(request):
     sql_query = '''
     SELECT
