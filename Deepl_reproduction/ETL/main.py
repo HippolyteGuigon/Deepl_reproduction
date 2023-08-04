@@ -15,7 +15,8 @@ from flask import Flask, request
 import sys
 
 deepl_reproduction_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..."))
-sys.path.append(deepl_reproduction_path)
+sys.path.insert(0,'/workspace')
+sys.path.insert(0,'/workspace/Deepl_reproduction')
 
 logging.warning("ADDED_PATH !!!!", deepl_reproduction_path)
 from Deepl_reproduction.configs.confs import load_conf, clean_params
