@@ -9,7 +9,6 @@ steps:
   args: ["functions", "deploy", "Deepl_reproduction",
          "--runtime", "python310",
          "--trigger-http",
-         "--entry-point", "Deepl_reproduction.ETL.main.wikipedia_etl_pipeline",
-         "--source", "workspace",
-         "--set-env-vars", "GOOGLE_FUNCTION_SOURCE=Deepl_reproduction/ETL/main.py"]
+         "--entry-point", "wikipedia_etl_pipeline",
+         "--source", "workspace/Deepl_reproduction/ETL/main.py"]
   dir: "/workspace"
