@@ -1,8 +1,17 @@
-# Dockerfile.install
-FROM python:3.10
+FROM python:3.9
 
+# Copier les fichiers requis dans le conteneur
+COPY requirements.txt /app/requirements.txt
+COPY Deepl_reproduction /app/Deepl_reproduction
+
+# Définir le répertoire de travail dans le conteneur
 WORKDIR /app
 
-COPY setup.py .
-RUN pip install -e .
-RUN python setup.py install
+# Installer les dépendances Python
+RUN pip install -r requirements.txt
+
+# Ajouter le répertoire parent de Deepl_reproduction au PYTHONPATH
+ENV PYTHONPATH "${PYTHONPATH}:/app"
+
+# Copier le code source du projet dans le conteneur
+COPY . /app
