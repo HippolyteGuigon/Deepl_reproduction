@@ -4,17 +4,12 @@ steps:
   args: ["clone", "https://github.com/HippolyteGuigon/Deepl_reproduction.git", "workspace"]
   dir: "/workspace"
 
-# Étape 2 : Utiliser un conteneur personnalisé pour installer les dépendances
+# Étape 2 : Construire l'image Docker personnalisée pour installer les dépendances
 - name: "gcr.io/cloud-builders/docker"
-  args: ["build", "-t", "python310-install", "-f", "DockerFile.install", "."]
+  args: ["build", "-t", "python310-deps", "-f", "Dockerfile", "."]
   dir: "/workspace"
 
-# Étape 3 : Utiliser le conteneur personnalisé pour installer les dépendances
-- name: "gcr.io/cloud-builders/docker"
-  args: ["run", "-v", "/workspace:/app", "python310-install"]
-  dir: "/workspace"
-
-# Étape 4 : Déployer la Cloud Function à partir du répertoire cloné
+# Étape 3 : Déployer la Cloud Function à partir du répertoire cloné
 - name: "gcr.io/cloud-builders/gcloud"
   args: ["functions", "deploy", "Deepl_reproduction",
          "--runtime", "python310",
@@ -22,5 +17,3 @@ steps:
          "--entry-point", "wikipedia_etl_pipeline",
          "--source", "/workspace/Deepl_reproduction/ETL"]
   dir: "/workspace"
-  env:
-    - "PYTHONPATH=/workspace"
