@@ -6,7 +6,7 @@ steps:
 
 # Étape 2 : Utiliser un conteneur personnalisé pour installer les dépendances
 - name: "gcr.io/cloud-builders/docker"
-  args: ["build", "-t", "python310-install", "-f", "Dockerfile.install", "."]
+  args: ["build", "-t", "python310-install", "-f", "DockerFile.install", "."]
   dir: "/workspace"
 
 # Étape 3 : Utiliser le conteneur personnalisé pour installer les dépendances
