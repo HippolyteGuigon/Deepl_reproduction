@@ -2,6 +2,8 @@ FROM python:3.9
 
 # Copier les fichiers requis dans le conteneur
 COPY requirements.txt /app/requirements.txt
+COPY setup.py /app/setup.py
+COPY Deepl_reproduction/ETL/setup.py /app/new_setup.py
 COPY Deepl_reproduction /app/Deepl_reproduction
 
 # Définir le répertoire de travail dans le conteneur
@@ -10,7 +12,7 @@ WORKDIR /app
 # Installer les dépendances Python
 RUN pip install -r requirements.txt
 RUN python setup.py install 
-RUN python Deepl_reproduction/ETL/setup.py install 
+RUN python new_setup.py install 
 # Ajouter le répertoire parent de Deepl_reproduction au PYTHONPATH
 ENV PYTHONPATH "${PYTHONPATH}:/app"
 
