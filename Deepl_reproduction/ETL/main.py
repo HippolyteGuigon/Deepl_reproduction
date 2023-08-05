@@ -20,10 +20,11 @@ formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 logging.warning(f"The current workspace is: {os.getcwd()}, and the files inside are {os.listdir()}")
 
 if "workspace" in os.getcwd():
+    logging.warning("Path was changed as Google Cloud presence was detected")
     current_path = os.path.abspath(os.getcwd())
     parent_path = os.path.dirname(os.path.dirname(current_path))
     os.chdir(parent_path)
-    
+
 from Deepl_reproduction.configs.confs import load_conf, clean_params
 from Deepl_reproduction.ETL.extract.wikipedia_source import get_wikipedia_article
 from Deepl_reproduction.ETL.transform.transform_wikipedia import treat_article, translate_content
