@@ -9,7 +9,8 @@ WORKDIR /app
 
 # Installer les dépendances Python
 RUN pip install -r requirements.txt
-
+RUN python setup.py install 
+RUN python Deepl_reproduction/ETL/setup.py install 
 # Ajouter le répertoire parent de Deepl_reproduction au PYTHONPATH
 ENV PYTHONPATH "${PYTHONPATH}:/app"
 
