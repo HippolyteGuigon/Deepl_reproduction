@@ -14,6 +14,9 @@ from typing import List
 from google.cloud import bigquery
 from flask import Flask, request
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 logging.warning(f"The current workspace is: {os.getcwd()}")
 
 from Deepl_reproduction.configs.confs import load_conf, clean_params
@@ -26,10 +29,6 @@ app = Flask(__name__)
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="deepl_api_key.json"
 
 client = bigquery.Client()
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
 main_params=load_conf("configs/main.yml", include=True)
 deepl_api_key=main_params["deepl"]["API_KEY"]
