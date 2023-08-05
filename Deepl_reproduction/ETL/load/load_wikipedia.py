@@ -16,6 +16,9 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
+if "workspace" not in os.getcwd():
+    main()
+    
 def indexing(data: pd.DataFrame)->pd.DataFrame:
     """
     The goal of this funcction is, 
