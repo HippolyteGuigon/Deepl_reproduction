@@ -20,21 +20,11 @@ steps:
   args:
     - "-c"
     - |
-      python setup.py install 
-
-  dir: "/workspace"
-
-# Étape 4 : Installer les dépendances Python dans le répertoire du projet en utilisant Python 3.10
-- name: "python:3.10"
-  entrypoint: "/bin/sh"
-  args:
-    - "-c"
-    - |
-      python setup.py install 
+      python /workspace/setup.py install 
 
   dir: "/workspace/Deepl_reproduction/ETL"
 
-# Étape 3 : Déployer la Cloud Function à partir du répertoire cloné
+# Étape 4 : Déployer la Cloud Function à partir du répertoire cloné
 - name: "gcr.io/cloud-builders/gcloud"
   args: ["functions", "deploy", "Deepl_reproduction",
          "--runtime", "python310",
