@@ -4,14 +4,6 @@ steps:
   args: ["clone", "https://github.com/HippolyteGuigon/Deepl_reproduction.git", "workspace"]
   dir: "/workspace"
 
-# Étape 2 : Voir ce qu'il y a dans le main
-- name: "python:3.10"
-  entrypoint: "/bin/sh"
-  args:
-      - "-c"  # L'argument -c permet d'indiquer à shell d'exécuter la commande suivante
-      - |
-        cat Deepl_reproduction/ETL/main.py
-
 # Étape 2 : Installer les dépendances Python dans le répertoire du projet en utilisant Python 3.10
 - name: "python:3.10"
   entrypoint: "/bin/sh"
@@ -19,8 +11,6 @@ steps:
     - "-c"
     - |
       python -m pip install -r /workspace/requirements.txt --target /workspace
-
-  dir: "/workspace"
 
 # Étape 3 : Installer les dépendances Python dans le répertoire du projet en utilisant Python 3.10
 - name: "python:3.10"
@@ -30,8 +20,6 @@ steps:
     - |
       python /workspace/setup.py install 
 
-  dir: "/workspace/Deepl_reproduction/ETL"
-
 # Étape 4 : Déployer la Cloud Function à partir du répertoire cloné
 - name: "gcr.io/cloud-builders/gcloud"
   args: ["functions", "deploy", "Deepl_reproduction",
@@ -39,4 +27,3 @@ steps:
          "--trigger-http",
          "--entry-point", "wikipedia_etl_pipeline",
          "--source", "/workspace/Deepl_reproduction/ETL"]
-  dir: "/workspace/Deepl_reproduction/ETL"
