@@ -20,9 +20,8 @@ steps:
   args:
     - "-c"
     - |
-      python /workspace/setup.py install 
-
-  dir: "/workspace/Deepl_reproduction/ETL"
+      cd /workspace/Deepl_reproduction/ETL
+      python setup.py install 
 
 # Étape 4 : Déployer la Cloud Function à partir du répertoire cloné
 - name: "gcr.io/cloud-builders/gcloud"
@@ -31,4 +30,6 @@ steps:
          "--trigger-http",
          "--entry-point", "wikipedia_etl_pipeline",
          "--source", "/workspace/Deepl_reproduction/ETL"]
-  dir: "/workspace/Deepl_reproduction/ETL"
+  dir: "/workspace"
+  env:
+    - "PYTHONPATH=/workspace:/workspace/Deepl_reproduction/ETL"
