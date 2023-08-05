@@ -1,4 +1,5 @@
 import requests
+import deepl
 from Deepl_reproduction.configs.confs import load_conf, clean_params
 
 main_params = load_conf("configs/main.yml", include=True)
@@ -23,15 +24,9 @@ def translate_text(text: str, target_lang: str, api_key: str=API_KEY)->str:
         -translation: str: The translated_language
     """
 
-    url = "https://api-free.deepl.com/v2/translate"
+    translator = deepl.Translator(API_KEY)
 
-    data={
-        "auth_key":api_key,
-        "text": text,
-        "target_lang": target_lang
-    }
-    response = requests.post(url,data=data)
-    response_data=response.json()
-    translation=response_data["translations"][0]["text"]
+    result = translator.translate_text(text, target_lang=target_lang) 
+    translation = result.text
 
     return translation

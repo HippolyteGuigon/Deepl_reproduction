@@ -4,7 +4,7 @@ setup(
     name="Deepl_reproduction",
     version="0.1.0",
     packages=find_packages(
-        include=["Deepl_reproduction", "Deepl_reproduction.*"]
+        include=["workspace/Deepl_reproduction", "workspace/Deepl_reproduction.*"]
     ),
     description="Python programm for creating a replica\
         of the Deepl traduction application",
