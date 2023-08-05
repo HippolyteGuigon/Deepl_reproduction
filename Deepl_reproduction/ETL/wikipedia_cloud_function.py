@@ -9,7 +9,6 @@ import pandas as pd
 import wikipedia 
 import deepl
 import functions_framework
-import sys
 from typing import List 
 from google.cloud import bigquery
 from flask import Flask, request
