@@ -18,4 +18,7 @@ def text_cleaning(dico_article: Dict)->Dict:
     dico_article["title"]=[re.sub(r"\(.*?\)", "", text) for text in dico_article["title"]]
     dico_article["text"]=[re.sub(r"\(.*?\)", "", text) for text in dico_article["text"]]
 
+    dico_article["title"]=[re.sub(r"[^a-zA-Z0-9\sàáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ']", '', sentence) for sentence in dico_article["title"]]
+    dico_article["text"]=[re.sub(r"[^a-zA-Z0-9\sàáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ']", '', sentence) for sentence in dico_article["text"]]
+
     return dico_article
