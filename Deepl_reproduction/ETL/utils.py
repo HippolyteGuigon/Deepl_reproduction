@@ -27,5 +27,26 @@ def create_wikipedia_table(client=client)->None:
     query_job = client.query(sql_query_raw)
     query_job = client.query(sql_query_processed)
 
-if __name__=="__main__":
-    create_wikipedia_table()
+def create_eventregistry_table(client=client)->None:
+    sql_query_raw='''
+    CREATE TABLE raw_data.raw_eventregistry
+    (
+    uri INT64,
+    title STRING, 
+    text STRING
+    );
+    '''
+
+    sql_query_processed='''
+    CREATE TABLE processed_data.processed_eventregistry
+    (
+    uri INT64,
+    title STRING, 
+    title_processed STRING,
+    text STRING, 
+    text_processed STRING
+    );
+    '''
+
+    query_job = client.query(sql_query_raw)
+    query_job = client.query(sql_query_processed)

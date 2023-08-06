@@ -37,7 +37,6 @@ def get_eventregistry_article()->dict:
             continue 
         content["uri"].append(article["uri"])
         content["title"].append(article["title"])
-        content["language"].append(article["lang"])
         content["text"].append(article["body"])
 
     return content
