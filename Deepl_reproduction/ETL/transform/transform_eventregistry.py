@@ -1,5 +1,7 @@
 import re 
+import pandas as pd
 from typing import Dict
+from Deepl_reproduction.ETL.transform.traduction import translate_text
 
 def text_cleaning(dico_article: Dict)->Dict:
     """
@@ -22,3 +24,26 @@ def text_cleaning(dico_article: Dict)->Dict:
     dico_article["text"]=[re.sub(r"[^a-zA-Z0-9\sàáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ']", '', sentence) for sentence in dico_article["text"]]
 
     return dico_article
+
+def translate_content(df: pd.DataFrame, output_language: str="FR")->pd.DataFrame:
+    """
+    The goal of this function is to
+    translate the content of the processed
+    DataFrame in another language
+    
+    Arguments:
+        -df: pd.DataFrame: The DataFrame
+        cointaining the sentences to be
+        translated
+        -output_language: str: The language
+        in which the sentences composing the
+        dataframe should be translated in
+    Returns:
+        -processed_df: The DataFrame with 
+        appropriate traductions
+    """
+    
+    df["text_processed"]=df["text"].apply(lambda texte: translate_text(text=texte, target_lang=output_language))
+    df["title_processed"]=df["title"].apply(lambda title: translate_text(text=title, target_lang=output_language))
+    
+    return df

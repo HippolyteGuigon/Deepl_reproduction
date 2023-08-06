@@ -16,6 +16,7 @@ def treat_article(article: str)->List[str]:
         -modified_article: List[str]:
         The list of modified sentences 
     """
+
     article=article.split("\n")
     article=[sentence for sentence in article if sentence != '' and "=" not in sentence]
     article=" ".join(article)
@@ -26,5 +27,19 @@ def treat_article(article: str)->List[str]:
     return modified_article
 
 def translate_content(df: pd.DataFrame, output_language: str="EN-GB")->pd.DataFrame:
+    """
+    The goal of this function is to
+    translate the content of the processed
+    DataFrame in another language
+    
+    Arguments:
+        -df: pd.DataFrame: The DataFrame
+        cointaining the sentences to be
+        translated
+        -output_language: str: The language
+        in which the sentences composing the
+        dataframe should be translated in
+    """
+    
     df["content_translated"]=df["content"].apply(lambda texte: translate_text(text=texte, target_lang=output_language))
     return df

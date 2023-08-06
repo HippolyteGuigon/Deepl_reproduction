@@ -32,7 +32,7 @@ def get_eventregistry_article()->dict:
         sourceLocationUri = usUri,
         dataType = ["news"])
     
-    for article in q.execQuery(er, sortBy = "date", maxItems = 500):
+    for article in q.execQuery(er, sortBy = "date", maxItems = 5):
         if article["uri"] in content["uri"] or article["lang"] != "eng":
             continue 
         content["uri"].append(article["uri"])
