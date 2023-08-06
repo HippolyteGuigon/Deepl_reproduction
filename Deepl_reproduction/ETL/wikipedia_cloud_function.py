@@ -9,12 +9,13 @@ import pandas as pd
 import wikipedia 
 import deepl
 import functions_framework
-import sys
 from typing import List 
 from google.cloud import bigquery
 from flask import Flask, request
 
-logging.warning(f"The current workspace is: {os.getcwd()}")
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
 from Deepl_reproduction.configs.confs import load_conf, clean_params
 from Deepl_reproduction.ETL.extract.wikipedia_source import get_wikipedia_article
@@ -26,10 +27,6 @@ app = Flask(__name__)
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="deepl_api_key.json"
 
 client = bigquery.Client()
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
 main_params=load_conf("configs/main.yml", include=True)
 deepl_api_key=main_params["deepl"]["API_KEY"]
