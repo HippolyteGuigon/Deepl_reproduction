@@ -1,1 +1,2 @@
 deepl: !include deepl.yml
+eventregistry: !include eventregistry.yml
