@@ -41,6 +41,3 @@ def get_eventregistry_article()->dict:
         content["text"].append(article["body"])
 
     return content
-
-if __name__ == '__main__':
-    get_eventregistry_article()
