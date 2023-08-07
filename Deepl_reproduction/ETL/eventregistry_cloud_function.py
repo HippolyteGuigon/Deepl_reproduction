@@ -64,22 +64,23 @@ def eventregistry_etl_pipeline():
     #schema_eventregistry_raw.validate(all_dataframe)
     #logging.info("Schema was validated for the all dataframe")
 
-    data=get_eventregistry_article()
+    data=get_eventregistry_article(max_limit=1)
     data_cleaned=text_cleaning(data)    
     df_eventregistry=pd.DataFrame.from_dict(data_cleaned,orient='index').transpose()
     df_eventregistry["uri"]=df_eventregistry["uri"].astype(int)
     schema_eventregistry_raw.validate(df_eventregistry)
     df_eventregistry=translate_content(df_eventregistry)
-    schema_eventregistry_processed.validate(df_eventregistry)    
-
+    schema_eventregistry_processed.validate(df_eventregistry) 
+    data_cleaned=df_eventregistry.to_dict("list")
+       
     for index, uri in enumerate(data["uri"]):
         if data["uri"] in unique_uri:
             logging.info(f"The uri {data['uri']} was already in the database and was skipped")
             continue
         load_raw_data([{"uri":data["uri"], "title":data["title"], "text":data["text"]}])
         logging.info("Raw Eventregistry data succesfully pushed in the dataframe")
-        load_processed_data([{"uri":data_cleaned["uri"], "title":data_cleaned["title"], "title_processed":data_cleaned["title_processed"],"text":data_cleaned["text"], "text_processed":data_cleaned["text_processed"]}])
-        logging.info("Processed Eventregistry data succesfully pushed in the dataframe")
+        for _, row in df_eventregistry.iterrows():
+                load_processed_data([{"uri":data_cleaned["uri"], "title":data_cleaned["title"], "title_processed":data_cleaned["title_processed"],"text":data_cleaned["text"], "text_processed":data_cleaned["text_processed"]}])
 
 if __name__ == '__main__':
     eventregistry_etl_pipeline()

@@ -7,14 +7,15 @@ main_params = clean_params(main_params)
 
 EVENTREGISTRY_API_KEY=main_params["EVENTREGISTRY_API_KEY"]
 
-def get_eventregistry_article()->dict:
+def get_eventregistry_article(max_limit: int=1)->dict:
     """
     The goal of this function is
     to go scrap articles from the
     eventregistry API
     
     Arguments:
-        -None
+        -max_limit: int: The max number of
+        articles to be retrieved
     Returns:
         -content: dict: The dictionnary
         containing the id, title and text 
@@ -32,7 +33,7 @@ def get_eventregistry_article()->dict:
         sourceLocationUri = usUri,
         dataType = ["news"])
     
-    for article in q.execQuery(er, sortBy = "date", maxItems = 5):
+    for article in q.execQuery(er, sortBy = "date", maxItems = max_limit):
         if article["uri"] in content["uri"] or article["lang"] != "eng":
             continue 
         content["uri"].append(article["uri"])
