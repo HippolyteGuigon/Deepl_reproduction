@@ -22,11 +22,7 @@ formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 from Deepl_reproduction.configs.confs import load_conf, clean_params
 from Deepl_reproduction.ETL.extract.event_registry_source import get_eventregistry_article
 from Deepl_reproduction.ETL.transform.transform_eventregistry import text_cleaning, translate_content
-#from Deepl_reproduction.ETL.load.load_eventregistry import load_raw_data_eventregistry, load_processed_data_eventregistry
-
-sys.path.insert(0, "Deepl_reproduction/ETL/load")
-
-from load_eventregistry import load_raw_data_eventregistry, load_processed_data_eventregistry
+from Deepl_reproduction.ETL.load.load_eventregistry import load_raw_data_eventregistry, load_processed_data_eventregistry
 
 app = Flask(__name__)
 
@@ -62,14 +58,15 @@ FROM
     `deepl-reprodution.raw_data.raw_eventregistry`
 '''
 
-def eventregistry_etl_pipeline():
+@functions_framework.http
+def eventregistry_etl_pipeline(request):
 
     query_job = client.query(sql_query)
     all_dataframe=query_job.to_dataframe()
     unique_uri = all_dataframe.uri.to_list()
 
-    #schema_eventregistry_raw.validate(all_dataframe)
-    #logging.info("Schema was validated for the all dataframe")
+    schema_eventregistry_raw.validate(all_dataframe)
+    logging.info("Schema was validated for the all dataframe")
 
     data=get_eventregistry_article(max_limit=1)
     data_cleaned=text_cleaning(data)    
@@ -89,5 +86,4 @@ def eventregistry_etl_pipeline():
         for _, row in df_eventregistry.iterrows():
                 load_processed_data_eventregistry([{"uri":int(row["uri"]), "title":str(row["title"]), "title_processed":str(row["title_processed"]),"text":str(row["text"]), "text_processed":str(row["text_processed"])}])
 
-if __name__ == '__main__':
-    eventregistry_etl_pipeline()
+    return "Success"
