@@ -4,8 +4,6 @@ import db_dtypes
 import pandas as pd 
 import pandera as pa
 from google.cloud import bigquery
-from Deepl_reproduction.ETL.transform.transform_wikipedia import treat_article, translate_content
-from Deepl_reproduction.ETL.extract.wikipedia_source import get_wikipedia_article
 from Deepl_reproduction.logs.logs import main
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="deepl_api_key.json"
@@ -19,7 +17,25 @@ formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 if "workspace" not in os.getcwd():
     main()
 
-def load_raw_data(data, project_id="deepl-reproduction", dataset_id="raw_data", table_name="raw_eventregistry", client=bigquery.Client()) -> None:
+schema_eventregistry_processed = pa.DataFrameSchema(
+        {   
+            "uri": pa.Column(pa.Int, nullable=False),
+            "title": pa.Column(pa.String, nullable=False),
+            "title_processed": pa.Column(pa.String, nullable=False),
+            "text" : pa.Column(pa.String, nullable=False),
+            "text_processed" : pa.Column(pa.String, nullable=False),
+        }
+    )
+
+schema_eventregistry_raw = pa.DataFrameSchema(
+    {   
+        "uri": pa.Column(pa.Int, nullable=False),
+        "title": pa.Column(pa.String, nullable=False),
+        "text": pa.Column(pa.String, nullable=False),
+    }
+)
+
+def load_raw_data_eventregistry(data, project_id="deepl-reproduction", dataset_id="raw_data", table_name="raw_eventregistry", client=bigquery.Client()) -> None:
     """
     The goal of this function is 
     to load raw data (before they 
@@ -30,11 +46,12 @@ def load_raw_data(data, project_id="deepl-reproduction", dataset_id="raw_data", 
     Returns:
         -None
     """
+
     table_ref=client.dataset(dataset_id).table(table_name)
     client.insert_rows_json(table_ref, data)
     logging.info(f"Raw data were successfully pushed in dataset {dataset_id} in table {table_name}")
 
-def load_processed_data(data, project_id="deepl-reproduction", dataset_id="processed_data", table_name="processed_eventregistry", client=bigquery.Client()) -> None:
+def load_processed_data_eventregistry(data, project_id="deepl-reproduction", dataset_id="processed_data", table_name="processed_eventregistry", client=bigquery.Client()) -> None:
     """
     The goal of this function is 
     to load raw data (before they 
@@ -45,6 +62,7 @@ def load_processed_data(data, project_id="deepl-reproduction", dataset_id="proce
     Returns:
         -None
     """
+
     table_ref=client.dataset(dataset_id).table(table_name)
     client.insert_rows_json(table_ref, data)
     logging.info(f"Processed data were successfully pushed in dataset {dataset_id} in table {table_name}")

@@ -42,8 +42,19 @@ def translate_content(df: pd.DataFrame, output_language: str="FR")->pd.DataFrame
         -processed_df: The DataFrame with 
         appropriate traductions
     """
-    
-    df["text_processed"]=df["text"].apply(lambda texte: translate_text(text=texte, target_lang=output_language))
+
     df["title_processed"]=df["title"].apply(lambda title: translate_text(text=title, target_lang=output_language))
+    df["text"]=df["text"].apply(lambda texte: texte.split("\n"))
+    df["text"]=df["text"].apply(lambda liste: [sentence for sentence in liste if sentence.strip()!=""])
+    df=df.explode("text")
+    df["text_processed"]=df["text"].apply(lambda texte: translate_text(text=texte, target_lang=output_language))
+    
+    df["uri"]=df["uri"].astype(int)
+    df["title"]=df["title"].astype(str)
+    df["title_processed"]=df["title_processed"].astype(str)
+    df["text"]=df["text"].astype(str)
+    df["text_processed"]=df["text_processed"].astype(str)
+    df.reset_index(inplace=True)
+    df.drop("index",axis=1,inplace=True)
     
     return df

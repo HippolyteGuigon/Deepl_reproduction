@@ -31,7 +31,7 @@ def create_eventregistry_table(client=client)->None:
     sql_query_raw='''
     CREATE TABLE raw_data.raw_eventregistry
     (
-    uri INT64,
+    uri INT,
     title STRING, 
     text STRING
     );
@@ -40,7 +40,7 @@ def create_eventregistry_table(client=client)->None:
     sql_query_processed='''
     CREATE TABLE processed_data.processed_eventregistry
     (
-    uri INT64,
+    uri INT,
     title STRING, 
     title_processed STRING,
     text STRING, 

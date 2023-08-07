@@ -67,6 +67,7 @@ def load_processed_data(data, project_id="deepl-reproduction", dataset_id="proce
     Returns:
         -None
     """
+    
     table_ref=client.dataset(dataset_id).table(table_name)
     client.insert_rows_json(table_ref, data)
     logging.info(f"Processed data were successfully pushed in dataset {dataset_id} in table {table_name}")
