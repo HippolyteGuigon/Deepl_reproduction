@@ -1,6 +1,10 @@
 import os 
 import pandas as pd
+import mysql.connector
+from sqlalchemy import create_engine
 from google.cloud import bigquery
+
+engine = create_engine("mysql+mysqldb://scott:tiger@localhost/foo")
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="deepl_api_key.json"
 
@@ -78,3 +82,17 @@ def load_all_data()->pd.DataFrame:
     full_data.drop_duplicates(inplace=True)
 
     return full_data
+
+if __name__ == '__main__':
+    engine = create_engine("mysql+mysqldb://Hippolyte:mogalys900@localhost/deepl_database")
+    full_data=load_all_data()
+    #db_user = 'Hippolyte'
+    #db_password = 'mogalys900'
+    #db_host = 'localhost' 
+    #db_name = 'deepl_database'
+
+    # Créer une connexion au moteur MySQL
+    #engine = create_engine(f'mysql+mysqlconnector://{db_user}:{db_password}@{db_host}/{db_name}')
+
+    # Charger le DataFrame dans la base de données
+    full_data.to_sql('deepl_table', con=engine, if_exists='replace', index=False)
