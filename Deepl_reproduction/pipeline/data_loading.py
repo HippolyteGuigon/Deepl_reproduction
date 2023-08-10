@@ -70,14 +70,11 @@ def load_all_data()->pd.DataFrame:
     for id in table_id:
         if id=="processed_eventregistry":
             df=get_dataframe_from_bq(id)
-            full_data=pd.concat([full_data,df[["title_processed", "title"]].rename(columns={"title_processed":"french", "title":"english"})],axis=0)
-            full_data=pd.concat([full_data,df[["text_processed", "text"]].rename(columns={"text_processed":"french", "text":"english"})],axis=0)
+            full_data=pd.concat([full_data,df[["title_processed", "title"]].rename(columns={"title_processed":"french", "title":"english"})])
+            full_data=pd.concat([full_data,df[["text_processed", "text"]].rename(columns={"text_processed":"french", "text":"english"})])
         elif id=="processed_wikipedia":
             df=get_dataframe_from_bq(id)
-            full_data=pd.concat([full_data,df[["content", "content_translated"]].rename(columns={"content":"french", "content_translated":"english"})],axis=0)
+            full_data=pd.concat([full_data,df[["content", "content_translated"]].rename(columns={"content":"french", "content_translated":"english"})])
     full_data.drop_duplicates(inplace=True)
-    
-    return full_data
 
-if __name__=='__main__':
-    print(load_all_data())
+    return full_data
