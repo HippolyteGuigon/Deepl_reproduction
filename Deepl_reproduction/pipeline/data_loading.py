@@ -111,3 +111,7 @@ def load_data()->None:
     data = pd.read_sql_query(query, engine)
 
     return data 
+
+if __name__ == '__main__':
+    load_data_to_front_database()
+    print(load_data())
