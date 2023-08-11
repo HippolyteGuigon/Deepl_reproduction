@@ -1,0 +1,4 @@
+db_user : 'root'
+db_password : 'mogalys900'
+db_host : 'localhost'
+db_name : 'deepl_database'

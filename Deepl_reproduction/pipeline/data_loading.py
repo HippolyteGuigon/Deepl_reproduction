@@ -1,8 +1,15 @@
 import os 
 import pandas as pd
 import mysql.connector
+import pymysql
+import logging
 from sqlalchemy import create_engine
 from google.cloud import bigquery
+from Deepl_reproduction.configs.confs import load_conf, clean_params
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
 engine = create_engine("mysql+mysqldb://scott:tiger@localhost/foo")
 
@@ -18,6 +25,14 @@ client = bigquery.Client()
 query_job = client.query(all_tables_id_query)
 
 results = query_job.result()
+
+main_params=load_conf("configs/main.yml", include=True)
+main_params=clean_params(main_params)
+
+db_user = main_params["db_user"]
+db_password = main_params["db_password"]
+db_host = main_params["db_host"]
+db_name = main_params["db_name"]
 
 def get_dataframe_from_bq(table_id: str, project_id: str="deepl-reprodution", dataset_id: str="processed_data")->pd.DataFrame:
     """
@@ -83,16 +98,16 @@ def load_all_data()->pd.DataFrame:
 
     return full_data
 
-if __name__ == '__main__':
-    engine = create_engine("mysql+mysqldb://Hippolyte:mogalys900@localhost/deepl_database")
+def load_data_to_front_database()->None:
     full_data=load_all_data()
-    #db_user = 'Hippolyte'
-    #db_password = 'mogalys900'
-    #db_host = 'localhost' 
-    #db_name = 'deepl_database'
-
-    # Créer une connexion au moteur MySQL
-    #engine = create_engine(f'mysql+mysqlconnector://{db_user}:{db_password}@{db_host}/{db_name}')
-
-    # Charger le DataFrame dans la base de données
+    engine = create_engine(f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}')
     full_data.to_sql('deepl_table', con=engine, if_exists='replace', index=False)
+
+    logging.info("Data successfuly pushed to the front database")
+
+def load_data()->None:
+    engine = create_engine(f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}')
+    query = "SELECT * FROM deepl_table"
+    data = pd.read_sql_query(query, engine)
+
+    return data 
