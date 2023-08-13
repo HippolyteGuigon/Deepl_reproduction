@@ -32,6 +32,8 @@ jobs:
         pip3 install google-cloud-bigquery
         pip3 install wheel
         pip3 install pymysql
+        pip3 install mysqlclient
+        pip3 install PyMySQL
     - name: Test with pytest
       run: |
         pytest
