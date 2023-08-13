@@ -1,7 +1,6 @@
 import unittest
 import os
 import subprocess
-import mysql.connector
 from Deepl_reproduction.pipeline.data_loading import load_all_data, load_data_to_front_database, load_data
 
 class Test(unittest.TestCase):
