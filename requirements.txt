@@ -7,7 +7,7 @@ mysql_connector_repackaged==0.3.1
 mysql-connector-python==8.1.0
 pandas==2.0.0
 pandera==0.16.1
-protobuf==4.24.0
+protobuf==4.21.1
 pymysql==1.1.0
 PyYAML==6.0.1
 requests==2.28.2
