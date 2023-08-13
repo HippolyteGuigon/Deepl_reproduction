@@ -1,7 +1,6 @@
 MYSQL_ROOT_PASSWORD:=Bisma4And7 
 
 activate_environment:
-	mamba init
 	mamba activate deepl_reproduction_env
 
 setup:
@@ -14,5 +13,5 @@ load_google_creditentials:
 	export GOOGLE_APPLICATION_CREDENTIALS=deepl_api_key.json
 
 launch_front_database_docker_image:
-	docker buildx build -t front_database_image:latest  -f Dockerfile-front-database .
+	docker build -t front_database_image:latest  -f Dockerfile-front-database .
 	docker run -d -p 3306:3306 --name local-mysql-container front_database_image
