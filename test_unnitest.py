@@ -32,8 +32,8 @@ class Test(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertEqual(result_run.returncode, 0)
         self.assertFalse(df_front_database.empty)
-        self.assertIn("content",df_front_database.columns)
-        self.assertIn("content_translated",df_front_database.columns)
+        self.assertIn("french",df_front_database.columns)
+        self.assertIn("english",df_front_database.columns)
         self.assertEqual(2, df_front_database.shape[1])
 
 
