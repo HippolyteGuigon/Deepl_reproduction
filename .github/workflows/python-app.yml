@@ -34,6 +34,7 @@ jobs:
         pip3 install pymysql
         pip3 install mysqlclient
         pip3 install PyMySQL
+        pip3 install cryptography
     - name: Test with pytest
       run: |
         pytest
