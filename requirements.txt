@@ -4,6 +4,7 @@ eventregistry==9.1
 Flask==2.3.2
 functions_framework==3.4.0
 mysql_connector_repackaged==0.3.1
+mysql-connector-python==8.1.0
 pandas==2.0.0
 pandera==0.16.1
 protobuf==4.24.0
