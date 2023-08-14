@@ -27,9 +27,10 @@ class Test(unittest.TestCase):
                                "Hola, ¿cómo estás?", 
                                "こんにちは、お元気ですか?"]
         
-        sentence_translated=[isinstance(translate_text(sentence),"str") for sentence in sentence_to_translate]
+        sentence_translated=[translate_text(sentence) for sentence in sentence_to_translate]
+        is_all_sentence=all([isinstance(sentence,"str") for sentence in sentence_translated])
 
-        self.assertTrue(all(sentence_translated))
+        self.assertTrue(is_all_sentence)
 
     def test_front_database_data(self)->None:
         """
