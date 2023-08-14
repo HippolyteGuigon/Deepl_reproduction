@@ -22,13 +22,13 @@ class Test(unittest.TestCase):
             -None
         """
 
-        languages=["FR", "JA", "EN"]
-        sentence_to_translate=["Hey, how are you ?", 
-                               "Bonjour, comment ça va ?",
-                               "Hola, ¿cómo estás?", 
-                               "こんにちは、お元気ですか?"]
+        languages=["FR", "JA", "EN", "ES"]
+        sentence_to_translate={"Hey, how are you ?":"EN", 
+                               "Bonjour, comment ça va ?":"FR",
+                               "Hola, ¿cómo estás?": "ES", 
+                               "こんにちは、お元気ですか?":"JA"}
         
-        sentence_translated=[translate_text(sentence,target_lang=target_lang) for sentence in sentence_to_translate for target_lang in languages]
+        sentence_translated=[translate_text(sentence,target_lang=target_lang) for sentence in sentence_to_translate.keys() for target_lang in languages if sentence_to_translate["sentence"]!=target_lang]
         is_all_sentence=all([isinstance(sentence,str) for sentence in sentence_translated])
 
         self.assertTrue(is_all_sentence)
