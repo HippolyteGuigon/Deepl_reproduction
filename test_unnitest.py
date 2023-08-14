@@ -27,7 +27,7 @@ class Test(unittest.TestCase):
                                "Hola, ¿cómo estás?", 
                                "こんにちは、お元気ですか?"]
         
-        sentence_translated=[translate_text(sentence) for sentence in sentence_to_translate]
+        sentence_translated=[translate_text(sentence,target_lang="EN-GB") for sentence in sentence_to_translate]
         is_all_sentence=all([isinstance(sentence,"str") for sentence in sentence_translated])
 
         self.assertTrue(is_all_sentence)
