@@ -1,10 +1,14 @@
 import requests
 import deepl
+import os
+from google.cloud import translate_v2 as translate
+from deepl.exceptions import QuotaExceededError
 from Deepl_reproduction.configs.confs import load_conf, clean_params
 
 main_params = load_conf("configs/main.yml", include=True)
 main_params = clean_params(main_params)
 
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "deepl_api_key.json"
 API_KEY=main_params["API_KEY"]
 
 def translate_text(text: str, target_lang: str, api_key: str=API_KEY)->str:
@@ -23,10 +27,14 @@ def translate_text(text: str, target_lang: str, api_key: str=API_KEY)->str:
     Returns:
         -translation: str: The translated_language
     """
-
-    translator = deepl.Translator(API_KEY)
-
-    result = translator.translate_text(text, target_lang=target_lang) 
-    translation = result.text
+    client = translate.Client()
+    
+    try:
+        translator = deepl.Translator(API_KEY)
+        result = translator.translate_text(text, target_lang=target_lang) 
+        translation = result.text
+    except QuotaExceededError:
+        translated_text = client.translate(text, source_language='fr', target_language=target_lang)
+        translation=translated_text["translatedText"]
 
     return translation

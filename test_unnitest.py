@@ -1,6 +1,7 @@
 import unittest
 import os
 import subprocess
+from Deepl_reproduction.ETL.transform.traduction import translate_text
 from Deepl_reproduction.pipeline.data_loading import load_all_data, load_data_to_front_database, load_data
 
 class Test(unittest.TestCase):
@@ -8,6 +9,27 @@ class Test(unittest.TestCase):
     The goal of this class is to implement unnitest
     and check everything commited makes sense
     """
+
+    def test_traduction_function(self)->None:
+        """
+        The goal of this function is to test
+        the traduction function works and 
+        is able to deliver accuracte results 
+        
+        Arguments:
+            -None
+        Returns:
+            -None
+        """
+
+        sentence_to_translate=["Hey, how are you ?", 
+                               "Bonjour, comment ça va ?",
+                               "Hola, ¿cómo estás?", 
+                               "こんにちは、お元気ですか?"]
+        
+        sentence_translated=[isinstance(translate_text(sentence),"str") for sentence in sentence_to_translate]
+
+        self.assertTrue(all(sentence_translated))
 
     def test_front_database_data(self)->None:
         """
