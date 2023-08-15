@@ -24,3 +24,8 @@ class Translation_Model:
     def get_data(self)->None:
         load_data_to_front_database()
         self.data=load_data()
+
+if __name__ == '__main__':
+    test=Translation_Model()
+    test.get_data()
+    print(test.data)
