@@ -1,9 +1,15 @@
-from torchtext.data.utils import get_tokenizer
-from torchtext.vocab import build_vocab_from_iterator
-from torchtext.datasets import multi30k, Multi30k
-from typing import Iterable, List
-from torch.utils.data import DataLoader
-from torch.nn.utils.rnn import pad_sequence
+import torch.nn as nn
+import torch
+import torch.nn.functional as F
+import math,copy,re
+import warnings
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import torchtext
+import matplotlib.pyplot as plt
+warnings.simplefilter("ignore")
+print(torch.__version__)
 
 import sys 
 sys.path.insert(0,"Deepl_reproduction/pipeline")
@@ -11,21 +17,41 @@ from Deepl_reproduction.logs.logs import main
 from data_loading import load_all_data, load_data_to_front_database, load_data
 from sklearn.model_selection import  train_test_split
 
-class Translation_Model:
-    """
-    The goal of this class 
-    is to create the transformer
-    model that will make the translations
-    from one language to another 
-    """
-    def __init__(self):
-        pass 
+class Embedding(nn.Module):
+    def __init__(self, vocab_size: int, embed_dim: int):
+        """
+        The goal of this class is
+        to embed each word entering
+        the model
+        
+        Arguments:
+            -vocab_size: int: The size
+            of the vocabulary (in the 
+            language)
+            -embed_dim: int: The dimension
+            of the embedding. In which dimension
+            are input words embedded
+        """
 
-    def get_data(self)->None:
-        load_data_to_front_database()
-        self.data=load_data()
+        super(Embedding, self).__init__()
+        self.embed=nn.Embedding(vocab_size,embed_dim)
 
-if __name__ == '__main__':
-    test=Translation_Model()
-    test.get_data()
-    print(test.data)
+    def foward(self, x: torch.tensor)->torch.tensor:
+        """
+        The goal of this function is
+        to activate the embedding,
+        transforming a word input 
+        vector into an embedded 
+        output vector 
+        
+        Arguments:
+            -x: torch.tensor: The input
+            word to be embedded 
+        Returns:
+            -out: torch.tensor: The output
+            embedded vector 
+        """
+
+        out=self.embed(x)
+        
+        return out
