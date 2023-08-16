@@ -108,3 +108,16 @@ class PositionalEmbedding(nn.Module):
         x+=torch.autograd.Variable(self.pe[:,:seq_len],requires_grad=False)
         
         return x
+    
+class MuliHeadAttention(nn.Module):
+    def __init__(self,embed_dim:int=512,n_heads:int=8):
+        super(MuliHeadAttention,self).__init__()
+
+        self.embed_dim=embed_dim
+        self.n_heads=n_heads 
+        self.single_head_dim=int(self.embed_dim/self.n_heads)
+
+        self.query_matrix=nn.Linear(self.single_head_dim,self.single_head_dim,bias=False)
+        self.key_matrix=nn.Linear(self.single_head_dim,self.single_head_dim,bias=False)
+        self.value_matrix=nn.Linear(self.single_head_dim,self.single_head_dim,bias=False)
+        self.out=nn.Linear(self.n_heads*self.single_head_dim,self.embed_dim)
