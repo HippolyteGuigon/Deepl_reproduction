@@ -5,18 +5,29 @@ import math,copy,re
 import warnings
 import pandas as pd
 import numpy as np
+import logging
 import seaborn as sns
 import torchtext
 import matplotlib.pyplot as plt
 import sys 
+import tensorflow_hub as hub
+import torch.optim as optim
+from transformers import BertTokenizer
 
 warnings.filterwarnings("ignore")
 
 sys.path.insert(0,"Deepl_reproduction/pipeline")
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+
 from Deepl_reproduction.logs.logs import main
+from torch.utils.data import Dataset, DataLoader,TensorDataset
 from data_loading import load_all_data, load_data_to_front_database, load_data
 
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    
 class Embedding(nn.Module):
     def __init__(self, vocab_size: int, embed_dim: int):
         """
@@ -36,7 +47,7 @@ class Embedding(nn.Module):
         super(Embedding, self).__init__()
         self.embed=nn.Embedding(vocab_size,embed_dim)
 
-    def foward(self, x: torch.tensor)->torch.tensor:
+    def forward(self, x: torch.tensor)->torch.tensor:
         """
         The goal of this function is
         to activate the embedding,
@@ -123,7 +134,8 @@ class MuliHeadAttention(nn.Module):
         self.out=nn.Linear(self.n_heads*self.single_head_dim,self.embed_dim)
 
     def forward(self, key, query, value, mask=None):
-
+        
+        logging.info("The forward step of MuliHeadAttention has begun")
         batch_size=key.size(0)
         seq_length=key.size(1)
 
@@ -157,6 +169,8 @@ class MuliHeadAttention(nn.Module):
 
         output=self.out(concat)
 
+        logging.info("The forward step of MuliHeadAttention has ended")
+
         return output
     
 class TransformerBlock(nn.Module):
@@ -178,6 +192,7 @@ class TransformerBlock(nn.Module):
 
 
     def forward(self,key, query, value):
+        logging.info("The forward step of TransformerBlock has begun")
         attention_out=self.attention(key,query,value)
         attention_residual_out=attention_out+value 
         norm1_out=self.dropout1(self.norm1(attention_residual_out))
@@ -186,6 +201,7 @@ class TransformerBlock(nn.Module):
 
         feed_fwd_residual_out=feed_fwd_out+norm1_out
         norm2_out=self.dropout2(self.norm2(feed_fwd_residual_out))
+        logging.info("The forward step of TransformerBlock has ended")
 
         return norm2_out
     
@@ -200,12 +216,14 @@ class TransformerEncoder(nn.Module):
         self.layers=nn.ModuleList([TransformerBlock(embed_dim,expansion_factor,n_heads) for i in range(num_layers)])
 
     def forward(self, x):
+        logging.info("The forward step of TransformerEncoder has begun")
         embed_out=self.embedding_layer(x)
         out=self.positional_encoder(embed_out)
         
         for layer in self.layers:
             out=layer(out,out,out)
 
+        logging.info("The forward step of TransformerEncoder has ended")
         return out
     
 class DecoderBlock(nn.Module):
@@ -218,11 +236,13 @@ class DecoderBlock(nn.Module):
         self.transformer_block=TransformerBlock(embed_dim,expansion_factor, n_heads)
 
     def forward(self, key, query, x, mask):
-
+        logging.info("The forward step of DecoderBlock has begun")
         attention=self.attention(x, x, x, mask=mask)
         value=self.dropout(self.norm(attention+x))
 
         out=self.transformer_block(key, query, value)
+
+        logging.info("The forward step of DecoderBlock has ended")
 
         return out
     
@@ -240,6 +260,7 @@ class TransformerDecoder(nn.Module):
         self.dropout=nn.Dropout(0.2)
 
     def forward(self, x, enc_out, mask):
+        logging.info("The forward step of TransformerDecoder has begun")
         x=self.word_embedding(x)
         x=self.position_embedding(x)
         x=self.dropout(x)
@@ -249,6 +270,8 @@ class TransformerDecoder(nn.Module):
 
         out=F.softmax(self.fc_out(x))
 
+        logging.info("The forward step of TransformerDecoder has ended")
+
         return out 
     
 
@@ -256,18 +279,21 @@ class Transformer(nn.Module):
     def __init__(self, embed_dim, src_vocab_size, target_vocab_size, seq_length, num_layers=2, expansion_factor=4,n_heads=8):
         super(Transformer,self).__init__()
 
+        
         self.target_vocab_size=target_vocab_size
         self.encoder=TransformerEncoder(seq_length, src_vocab_size, embed_dim, num_layers=num_layers, expansion_factor=expansion_factor, n_heads=n_heads)
         self.decoder=TransformerDecoder(target_vocab_size, embed_dim, seq_length, num_layers=num_layers,expansion_factor=expansion_factor, n_heads=n_heads)
+        logging.info("Initialization of the transformer has ended")
 
     def make_trg_mask(self, trg):
         batch_size, trg_len = trg.shape
 
-        trg_mask=torch.trill(torch.ones((trg_len,trg_len))).expand(batch_size, 1, trg_len, trg_len)
-
+        trg_mask=torch.tril(torch.ones((trg_len,trg_len))).expand(batch_size, 1, trg_len, trg_len)
+        logging.info("The make trg mask step has been sucessfully achieved")
         return trg_mask
     
     def decode(self, src, trg):
+        logging.info("Decode part has begun")
         trg_mask=self.make_trg_mask(trg)
         enc_out=self.encoder(src)
         out_labels=[]
@@ -281,12 +307,70 @@ class Transformer(nn.Module):
             out=out.argmax(-1)
             out_labels.append(out.item())
             out=torch.unsqueeze(out,axis=0)
-
         return out_labels
     
     def forward(self, src, trg):
+        logging.info("Forward part of Transformer has begun")
         trg_mask=self.make_trg_mask(trg)
         enc_out=self.encoder(src)
         outputs=self.decoder(trg, enc_out, trg_mask)
-
+        logging.info("Forward part of Transformer has ended")
         return outputs
+    
+def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learning_rate=1e-3, device='cpu'):
+    load_data_to_front_database()
+    df_front_database=load_data()
+    df_front_database=df_front_database.loc[:500,:]
+    src_sentences=df_front_database["french"].tolist()
+    trg_sentences=df_front_database["english"].tolist()
+
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')  # Utilisez le tokenizer BERT
+    
+    # Tokenize, encode, and pad source sentences
+    src_tokens = [tokenizer.encode(text, add_special_tokens=True, max_length=max_seq_length, pad_to_max_length=True,truncation=True) for text in src_sentences]
+    src_tensor = torch.tensor(src_tokens, dtype=torch.long)
+    
+    # Tokenize, encode, and pad target sentences
+    trg_tokens = [tokenizer.encode(text, add_special_tokens=True, max_length=max_seq_length, pad_to_max_length=True,truncation=True) for text in trg_sentences]
+    trg_tensor = torch.tensor(trg_tokens, dtype=torch.long)
+    
+    # Create DataLoader
+    dataset = TensorDataset(src_tensor, trg_tensor)
+    train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    
+    # Set up loss function and optimizer
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    
+    # Move model to the specified device
+    model.to(device)
+    
+    # Training loop
+    for epoch in range(num_epochs):
+        logging.info("Model train has begun")
+        model.train()
+        logging.info("Model train was passed")
+        total_loss = 0.0
+        for src_batch, trg_batch in train_loader:
+            src_batch = src_batch.to(device)
+            trg_batch = trg_batch.to(device)
+            
+            optimizer.zero_grad()
+            
+            # Forward pass
+            outputs = model(src_batch, trg_batch)
+            loss = criterion(outputs.view(-1, model.target_vocab_size), trg_batch.view(-1))
+            logging.info(f"Loss was computed and is of: {loss}")
+            # Backpropagation and optimization
+            loss.backward()
+            optimizer.step()
+            
+            total_loss += loss.item()
+        
+        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss:.4f}")
+    
+    print("Training finished.")
+
+if __name__=="__main__":
+    model = Transformer(embed_dim=512, src_vocab_size=30000, target_vocab_size=30000, seq_length=512, num_layers=6, expansion_factor=4, n_heads=8)
+    fit_transformer(model, max_seq_length=512, batch_size=200, num_epochs=10, learning_rate=1e-3, device='cpu')
