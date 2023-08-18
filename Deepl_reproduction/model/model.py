@@ -158,3 +158,11 @@ class MuliHeadAttention(nn.Module):
         output=self.out(concat)
 
         return output
+    
+class TransformerBlock(nn.Module):
+    def __init__(self, embed_dim, expansion_factor=4,n_heads=8):
+        super(TransformerBlock,self).__init__()
+
+        self.attention=MuliHeadAttention(embed_dim,n_heads)
+
+        self.norm1=nn.LayerNorm(embed_dim)
