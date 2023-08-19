@@ -135,7 +135,6 @@ class MuliHeadAttention(nn.Module):
 
     def forward(self, key, query, value, mask=None):
         
-        logging.info("The forward step of MuliHeadAttention has begun")
         batch_size=key.size(0)
         seq_length=key.size(1)
 
@@ -169,7 +168,6 @@ class MuliHeadAttention(nn.Module):
 
         output=self.out(concat)
 
-        logging.info("The forward step of MuliHeadAttention has ended")
 
         return output
     
@@ -192,7 +190,6 @@ class TransformerBlock(nn.Module):
 
 
     def forward(self,key, query, value):
-        logging.info("The forward step of TransformerBlock has begun")
         attention_out=self.attention(key,query,value)
         attention_residual_out=attention_out+value 
         norm1_out=self.dropout1(self.norm1(attention_residual_out))
@@ -201,7 +198,6 @@ class TransformerBlock(nn.Module):
 
         feed_fwd_residual_out=feed_fwd_out+norm1_out
         norm2_out=self.dropout2(self.norm2(feed_fwd_residual_out))
-        logging.info("The forward step of TransformerBlock has ended")
 
         return norm2_out
     
@@ -216,14 +212,12 @@ class TransformerEncoder(nn.Module):
         self.layers=nn.ModuleList([TransformerBlock(embed_dim,expansion_factor,n_heads) for i in range(num_layers)])
 
     def forward(self, x):
-        logging.info("The forward step of TransformerEncoder has begun")
         embed_out=self.embedding_layer(x)
         out=self.positional_encoder(embed_out)
         
         for layer in self.layers:
             out=layer(out,out,out)
 
-        logging.info("The forward step of TransformerEncoder has ended")
         return out
     
 class DecoderBlock(nn.Module):
@@ -236,13 +230,11 @@ class DecoderBlock(nn.Module):
         self.transformer_block=TransformerBlock(embed_dim,expansion_factor, n_heads)
 
     def forward(self, key, query, x, mask):
-        logging.info("The forward step of DecoderBlock has begun")
         attention=self.attention(x, x, x, mask=mask)
         value=self.dropout(self.norm(attention+x))
 
         out=self.transformer_block(key, query, value)
 
-        logging.info("The forward step of DecoderBlock has ended")
 
         return out
     
@@ -260,7 +252,6 @@ class TransformerDecoder(nn.Module):
         self.dropout=nn.Dropout(0.2)
 
     def forward(self, x, enc_out, mask):
-        logging.info("The forward step of TransformerDecoder has begun")
         x=self.word_embedding(x)
         x=self.position_embedding(x)
         x=self.dropout(x)
@@ -270,7 +261,6 @@ class TransformerDecoder(nn.Module):
 
         out=F.softmax(self.fc_out(x))
 
-        logging.info("The forward step of TransformerDecoder has ended")
 
         return out 
     
@@ -283,17 +273,14 @@ class Transformer(nn.Module):
         self.target_vocab_size=target_vocab_size
         self.encoder=TransformerEncoder(seq_length, src_vocab_size, embed_dim, num_layers=num_layers, expansion_factor=expansion_factor, n_heads=n_heads)
         self.decoder=TransformerDecoder(target_vocab_size, embed_dim, seq_length, num_layers=num_layers,expansion_factor=expansion_factor, n_heads=n_heads)
-        logging.info("Initialization of the transformer has ended")
 
     def make_trg_mask(self, trg):
         batch_size, trg_len = trg.shape
 
         trg_mask=torch.tril(torch.ones((trg_len,trg_len))).expand(batch_size, 1, trg_len, trg_len)
-        logging.info("The make trg mask step has been sucessfully achieved")
         return trg_mask
     
     def decode(self, src, trg):
-        logging.info("Decode part has begun")
         trg_mask=self.make_trg_mask(trg)
         enc_out=self.encoder(src)
         out_labels=[]
@@ -310,11 +297,9 @@ class Transformer(nn.Module):
         return out_labels
     
     def forward(self, src, trg):
-        logging.info("Forward part of Transformer has begun")
         trg_mask=self.make_trg_mask(trg)
         enc_out=self.encoder(src)
         outputs=self.decoder(trg, enc_out, trg_mask)
-        logging.info("Forward part of Transformer has ended")
         return outputs
     
 def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learning_rate=1e-3, device='cpu'):
@@ -347,9 +332,7 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
     
     # Training loop
     for epoch in range(num_epochs):
-        logging.info("Model train has begun")
         model.train()
-        logging.info("Model train was passed")
         total_loss = 0.0
         for src_batch, trg_batch in train_loader:
             src_batch = src_batch.to(device)
