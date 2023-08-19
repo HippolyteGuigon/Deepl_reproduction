@@ -16,7 +16,7 @@ seaborn==0.12.2
 setuptools==67.6.1
 SQLAlchemy==2.0.12
 tensorflow_hub==0.14.0
-torch==2.0.0
+torch==2.0.1
 torchtext==0.15.2
 transformers==4.28.1
 wikipedia==1.4.0
