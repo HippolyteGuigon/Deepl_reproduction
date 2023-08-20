@@ -324,7 +324,7 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
     train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     
     # Set up loss function and optimizer
-    criterion = nn.NLLLoss(ignore_index=0)
+    criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     
     # Move model to the specified device
@@ -342,22 +342,15 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
             
             # Forward pass
             outputs = model(src_batch, trg_batch)
-            
-            # Compute log-probabilities using log softmax
-            outputs_log_softmax = F.log_softmax(outputs, dim=-1)
-            
-            # Reshape outputs and trg_batch for indexing
-            batch_size, seq_len, vocab_size = outputs_log_softmax.size(0), outputs_log_softmax.size(1), outputs_log_softmax.size(2)
-            outputs_log_softmax = outputs_log_softmax.view(batch_size * seq_len, vocab_size)
-            trg_batch = trg_batch.view(-1)
-            
-            # Indexing for NLLLoss
-            target_log_probs = outputs_log_softmax[torch.arange(batch_size * seq_len), trg_batch]
+        
+            # Calculate loss
+            loss = criterion(outputs.view(-1, model.target_vocab_size), trg_batch.view(-1))
+
             
             # Compute loss
-            print("target_log_probs",target_log_probs, target_log_probs.size())
+            print("target_log_probs",outputs, outputs.size())
             print("trg_batch", trg_batch, trg_batch.size())
-            loss = criterion(target_log_probs, trg_batch)
+            loss = criterion(outputs, trg_batch)
             logging.info(f"Loss was computed and is of: {loss:.2f}")
             # Backpropagation and optimization
             loss.backward()
