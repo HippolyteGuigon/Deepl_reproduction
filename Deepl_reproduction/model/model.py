@@ -355,8 +355,8 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
             target_log_probs = outputs_log_softmax[torch.arange(batch_size * seq_len), trg_batch]
             
             # Compute loss
-            print("target_log_probs",target_log_probs)
-            print("trg_batch", trg_batch)
+            print("target_log_probs",target_log_probs, target_log_probs.size())
+            print("trg_batch", trg_batch, trg_batch.size())
             loss = criterion(target_log_probs, trg_batch)
             logging.info(f"Loss was computed and is of: {loss:.2f}")
             # Backpropagation and optimization
