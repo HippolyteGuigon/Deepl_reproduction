@@ -346,7 +346,7 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
             outputs = F.softmax(outputs, dim=-1)
             trg_indices = trg_batch.view(-1)
             target_probs = outputs.view(-1, model.target_vocab_size)[
-        torch.arange(outputs.size(0)), trg_indices
+        torch.arange(outputs.size(0)),   trg_indices
     ]
             loss = -torch.log(target_probs).mean()
             logging.info(f"Loss was computed and is of: {loss:.2f}")
