@@ -274,10 +274,8 @@ class Transformer(nn.Module):
         self.encoder=TransformerEncoder(seq_length, src_vocab_size, embed_dim, num_layers=num_layers, expansion_factor=expansion_factor, n_heads=n_heads)
         self.decoder=TransformerDecoder(target_vocab_size, embed_dim, seq_length, num_layers=num_layers,expansion_factor=expansion_factor, n_heads=n_heads)
 
-    def make_trg_mask(self, trg):
-        batch_size, trg_len = trg.shape
-
-        trg_mask=torch.tril(torch.ones((trg_len,trg_len))).expand(batch_size, 1, trg_len, trg_len)
+    def make_trg_mask(self, max_seq_length):
+        trg_mask = torch.tril(torch.ones((max_seq_length, max_seq_length))).expand(batch_size, 1, max_seq_length, max_seq_length)
         return trg_mask
     
     def decode(self, src, trg):
@@ -297,9 +295,9 @@ class Transformer(nn.Module):
         return out_labels
     
     def forward(self, src, trg):
-        trg_mask=self.make_trg_mask(trg)
-        enc_out=self.encoder(src)
-        outputs=self.decoder(trg, enc_out, trg_mask)
+        trg_mask = self.make_trg_mask(trg.size(1))  # Use trg.size(1) instead of trg
+        enc_out = self.encoder(src)
+        outputs = self.decoder(trg, enc_out, trg_mask)
         return outputs
     
 def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learning_rate=1e-3, device='cpu'):
