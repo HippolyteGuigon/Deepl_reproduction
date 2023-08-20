@@ -2,6 +2,7 @@
 
 *.txt
 *.ipynb 
+*.csv
 model_example.py
 !requirements.txt
 

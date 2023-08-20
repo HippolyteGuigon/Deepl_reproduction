@@ -309,7 +309,7 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
     src_sentences=df_front_database["french"].tolist()
     trg_sentences=df_front_database["english"].tolist()
 
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')  # Utilisez le tokenizer BERT
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased',hidden_size=256)  # Utilisez le tokenizer BERT
     
     # Tokenize, encode, and pad source sentences
     src_tokens = [tokenizer.encode(text, add_special_tokens=True, max_length=max_seq_length, pad_to_max_length=True,truncation=True) for text in src_sentences]
@@ -355,5 +355,5 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
     print("Training finished.")
 
 if __name__=="__main__":
-    model = Transformer(embed_dim=512, src_vocab_size=30000, target_vocab_size=30000, seq_length=512, num_layers=3, expansion_factor=2, n_heads=8)
-    fit_transformer(model, max_seq_length=512, batch_size=100, num_epochs=10, learning_rate=1e-3, device='cpu')
+    model = Transformer(embed_dim=256, src_vocab_size=30000, target_vocab_size=30000, seq_length=512, num_layers=3, expansion_factor=2, n_heads=8)
+    fit_transformer(model, max_seq_length=256, batch_size=100, num_epochs=10, learning_rate=1e-3, device='cpu')
