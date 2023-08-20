@@ -343,7 +343,7 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
             # Forward pass
             outputs = model(src_batch, trg_batch)
             loss = criterion(outputs.view(-1, model.target_vocab_size), trg_batch.view(-1))
-            logging.info(f"Loss was computed and is of: {loss}")
+            logging.info(f"Loss was computed and is of: {loss:.2f}")
             # Backpropagation and optimization
             loss.backward()
             optimizer.step()
@@ -356,4 +356,4 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
 
 if __name__=="__main__":
     model = Transformer(embed_dim=256, src_vocab_size=30000, target_vocab_size=30000, seq_length=512, num_layers=3, expansion_factor=2, n_heads=8)
-    fit_transformer(model, max_seq_length=256, batch_size=100, num_epochs=10, learning_rate=1e-3, device='cpu')
+    fit_transformer(model, max_seq_length=256, batch_size=100, num_epochs=10, learning_rate=1e-2, device='cpu')
