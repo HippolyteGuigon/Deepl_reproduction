@@ -343,6 +343,7 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
             # Forward pass
             outputs = model(src_batch, trg_batch)
             print("IIIIICIII", outputs)
+            print("ICIIII2",trg_batch )
             loss = criterion(outputs.view(-1, model.target_vocab_size), trg_batch.view(-1))
             logging.info(f"Loss was computed and is of: {loss:.2f}")
             # Backpropagation and optimization
