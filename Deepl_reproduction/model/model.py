@@ -337,6 +337,7 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
         for src_batch, trg_batch in train_loader:
             src_batch = src_batch.to(device)
             trg_batch = trg_batch.to(device)
+            trg_batch = F.one_hot(trg_batch, num_classes=model.target_vocab_size).float()
             
             optimizer.zero_grad()
             
