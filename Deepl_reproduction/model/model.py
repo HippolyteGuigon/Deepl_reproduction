@@ -324,7 +324,7 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
     train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     
     # Set up loss function and optimizer
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.NLLLoss(ignore_index=0)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     
     # Move model to the specified device
