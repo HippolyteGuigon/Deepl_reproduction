@@ -36,5 +36,6 @@ def translate_text(text: str, target_lang: str, api_key: str=API_KEY)->str:
         if "quota" in str(e).lower():
             translated_text = client.translate(text, source_language='fr', target_language=target_lang)
             translation=translated_text["translatedText"]
-
+        else:
+            raise ValueError("The two sources of traduction failed !")
     return translation
