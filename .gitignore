@@ -3,6 +3,8 @@
 *.txt
 *.ipynb 
 *.csv
+*.pt 
+
 model_example.py
 !requirements.txt
 

@@ -334,7 +334,7 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
     for epoch in range(num_epochs):
         model.train()
         total_loss = 0.0
-        for src_batch, trg_batch in train_loader:
+        for index, (src_batch, trg_batch) in enumerate(train_loader):
             src_batch = src_batch.to(device)
             trg_batch = trg_batch.to(device)
             
@@ -344,9 +344,7 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
             outputs = model(src_batch, trg_batch)
             trg_batch = F.one_hot(trg_batch, num_classes=model.target_vocab_size).float()
             loss = criterion(outputs.view(-1, model.target_vocab_size), trg_batch.view(-1, model.target_vocab_size))
-            print("outputs", outputs[0], outputs[0].size())
-            print("trg_batch", trg_batch[0], trg_batch[0].size())
-            logging.info(f"Loss was computed and is of: {loss}")
+            logging.info(f"Loss was computed and is of: {loss:.2f}")
             # Backpropagation and optimization
             loss.backward()
             optimizer.step()
