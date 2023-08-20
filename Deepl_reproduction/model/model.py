@@ -343,12 +343,12 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
             # Forward pass
             outputs = model(src_batch, trg_batch)
             
-            outputs = F.softmax(outputs, dim=-1)
+            outputs = F.log_softmax(outputs, dim=-1)
             trg_indices = trg_batch.view(-1)
-            target_probs = outputs.view(-1, model.target_vocab_size)[
-        torch.arange(outputs.size(0)),   trg_indices
+            target_log_probs = outputs.view(-1, model.target_vocab_size)[
+        torch.arange(outputs.size(0)), trg_indices
     ]
-            loss = -torch.log(target_probs).mean()
+            loss = -target_log_probs.mean()
             logging.info(f"Loss was computed and is of: {loss:.2f}")
             # Backpropagation and optimization
             loss.backward()
