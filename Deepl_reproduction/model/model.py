@@ -25,8 +25,6 @@ formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 from Deepl_reproduction.logs.logs import main
 from torch.utils.data import Dataset, DataLoader,TensorDataset
 from data_loading import load_all_data, load_data_to_front_database, load_data
-
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     
 class Embedding(nn.Module):
     def __init__(self, vocab_size: int, embed_dim: int):
@@ -356,5 +354,5 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
     logging.warning("Training finished.")
 
 if __name__=="__main__": 
-    model = Transformer(embed_dim=16, src_vocab_size=10000, target_vocab_size=10000, seq_length=64, num_layers=3, expansion_factor=2, n_heads=8)
+    model = Transformer(embed_dim=16, src_vocab_size=20000, target_vocab_size=20000, seq_length=64, num_layers=3, expansion_factor=2, n_heads=8)
     fit_transformer(model, max_seq_length=15, batch_size=32, num_epochs=30, learning_rate=1e-3, device='cpu')
