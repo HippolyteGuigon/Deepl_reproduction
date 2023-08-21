@@ -303,7 +303,6 @@ class Transformer(nn.Module):
 def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learning_rate=1e-3, device='cpu'):
     load_data_to_front_database()
     df_front_database=load_data()
-    df_front_database=df_front_database.sample(100)
     src_sentences=df_front_database["french"].tolist()
     trg_sentences=df_front_database["english"].tolist()
 
