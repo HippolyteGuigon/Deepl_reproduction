@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import sys 
 import tensorflow_hub as hub
 import torch.optim as optim
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel, AutoTokenizer, BertTokenizer
 
 warnings.filterwarnings("ignore")
 
