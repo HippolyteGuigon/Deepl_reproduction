@@ -309,7 +309,7 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
     src_sentences=df_front_database["french"].tolist()
     trg_sentences=df_front_database["english"].tolist()
 
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased',hidden_size=30)  # Utilisez le tokenizer BERT
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased',hidden_size=16)  # Utilisez le tokenizer BERT
     
     # Tokenize, encode, and pad source sentences
     src_tokens = [tokenizer.encode(text, add_special_tokens=True, max_length=max_seq_length, pad_to_max_length=True,truncation=True) for text in src_sentences]
@@ -342,8 +342,6 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
             
             # Forward pass
             outputs = model(src_batch, trg_batch)
-            print("outputs",outputs, outputs.size())
-            print("trg_batch",trg_batch, trg_batch.size())
             trg_batch = F.one_hot(trg_batch, num_classes=model.target_vocab_size).float()
             loss = criterion(outputs.view(-1, model.target_vocab_size), trg_batch.view(-1, model.target_vocab_size))
             logging.info(f"Loss was computed and is of: {loss:.5f}")
@@ -358,5 +356,5 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
     logging.warning("Training finished.")
 
 if __name__=="__main__": 
-    model = Transformer(embed_dim=32, src_vocab_size=30000, target_vocab_size=30000, seq_length=64, num_layers=3, expansion_factor=2, n_heads=8)
-    fit_transformer(model, max_seq_length=32, batch_size=100, num_epochs=10, learning_rate=1e-3, device='cpu')
+    model = Transformer(embed_dim=16, src_vocab_size=30000, target_vocab_size=30000, seq_length=64, num_layers=3, expansion_factor=2, n_heads=8)
+    fit_transformer(model, max_seq_length=32, batch_size=200, num_epochs=10, learning_rate=1e-3, device='cpu')
