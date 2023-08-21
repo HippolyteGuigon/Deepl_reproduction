@@ -53,10 +53,18 @@ def get_dataframe_from_bq(table_id: str, project_id: str="deepl-reprodution", da
         DataFrame containing the full data
     """
 
-    query = f"""
-    SELECT *
-    FROM `{project_id}.{dataset_id}.{table_id}`
-    """
+    if table_id=="processed_kaggle_dataset":
+        query = f"""
+        SELECT *
+        FROM `{project_id}.{dataset_id}.{table_id}`
+        LIMIT 50000
+        """
+    else:
+
+        query = f"""
+        SELECT *
+        FROM `{project_id}.{dataset_id}.{table_id}`
+        """
 
     client = bigquery.Client()
     query_job = client.query(query)
@@ -95,6 +103,9 @@ def load_all_data()->pd.DataFrame:
         elif id=="processed_wikipedia":
             df=get_dataframe_from_bq(id)
             full_data=pd.concat([full_data,df[["content", "content_translated"]].rename(columns={"content":"french", "content_translated":"english"})])
+        elif id=="processed_kaggle_dataset":
+            df=get_dataframe_from_bq(id)
+            full_data=pd.concat([full_data,df[["french", "english"]]])
     full_data.drop_duplicates(inplace=True)
 
     return full_data
