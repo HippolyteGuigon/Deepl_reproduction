@@ -355,6 +355,6 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
     
     logging.warning("Training finished.")
 
-if __name__=="__main__":
+if __name__=="__main__": 
     model = Transformer(embed_dim=30, src_vocab_size=30000, target_vocab_size=30000, seq_length=512, num_layers=3, expansion_factor=2, n_heads=8)
     fit_transformer(model, max_seq_length=30, batch_size=100, num_epochs=10, learning_rate=1e-3, device='cpu')
