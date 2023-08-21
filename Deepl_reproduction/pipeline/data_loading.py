@@ -115,7 +115,7 @@ def load_data_to_front_database()->None:
     engine = create_engine(f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}')
     full_data.to_sql('deepl_table', con=engine, if_exists='replace', index=False)
     
-    logging.info("Data successfuly pushed to the front database")
+    logging.info(f"Data successfuly pushed to the front database and is of size: {full_data.shape[0]}")
 
 def load_data()->None:
     engine = create_engine(f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}')
