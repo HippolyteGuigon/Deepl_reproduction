@@ -350,9 +350,10 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
             total_loss += loss.item()
         
         logging.warning(f"Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss:.4f}")
-    
+        logging.info("Saving model...")
+        torch.save(model, "Deepl_reproduction/model/model_save.pt")
     logging.warning("Training finished.")
 
 if __name__=="__main__": 
     model = Transformer(embed_dim=16, src_vocab_size=32000, target_vocab_size=32000, seq_length=64, num_layers=3, expansion_factor=2, n_heads=8)
-    fit_transformer(model, max_seq_length=15, batch_size=32, num_epochs=30, learning_rate=1e-3, device='cpu')
+    fit_transformer(model, max_seq_length=15, batch_size=50, num_epochs=10, learning_rate=1e-3, device='cpu')

@@ -57,7 +57,7 @@ def get_dataframe_from_bq(table_id: str, project_id: str="deepl-reprodution", da
         query = f"""
         SELECT *
         FROM `{project_id}.{dataset_id}.{table_id}`
-        LIMIT 50000
+        LIMIT 100000
         """
     else:
 
