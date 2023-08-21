@@ -311,11 +311,13 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
 
     # Tokenize, encode, and pad source sentences
     src_tokens=[french_tokenizer(text, padding=True, truncation=True, return_tensors="pt")["input_ids"] for text in src_sentences]
-    src_tensor = torch.tensor(src_tokens, dtype=torch.long)
+    src_tensor=torch.stack(src_tensor)
+    src_tensor=torch.tensor(src_tensor,dtype=torch.long)
     
     # Tokenize, encode, and pad target sentences
     trg_tokens = [english_tokenizer(text, padding=True, truncation=True, return_tensors="pt")["input_ids"] for text in trg_sentences]
-    trg_tensor = torch.tensor(trg_tokens, dtype=torch.long)
+    trg_tensor=torch.stack(trg_tensor)
+    trg_tensor=torch.tensor(trg_tensor,dtype=torch.long)
     
     # Create DataLoader
     dataset = TensorDataset(src_tensor, trg_tensor)
