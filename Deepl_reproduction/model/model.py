@@ -374,9 +374,12 @@ def get_translation():
     src_tokenized = french_tokenizer.encode(french_sentence, add_special_tokens=True, max_length=15, pad_to_max_length=True, truncation=True)
     src_tensor = torch.tensor(src_tokenized, dtype=torch.long).unsqueeze(0)  # Ajouter une dimension pour le lot (batch)
 
+    trg_tokenized = english_tokenizer.encode("Hello ! How are you ?", add_special_tokens=True, max_length=15, pad_to_max_length=True, truncation=True)
+    trg_tensor = torch.tensor(trg_tokenized, dtype=torch.long).unsqueeze(0)  # Ajouter une dimension pour le lot (batch)
+
     # Utiliser le modèle pour effectuer la traduction
     with torch.no_grad():
-        translation_ids = model.decode(src_tensor, trg="This is a test sentence")  # trg=None car nous n'avons pas besoin de la cible pour la traduction
+        translation_ids = model.decode(src_tensor, trg=trg_tensor)  # trg=None car nous n'avons pas besoin de la cible pour la traduction
 
     # Décoder les identifiants de tokens en phrases en anglais
     english_translation = english_tokenizer.decode(translation_ids, skip_special_tokens=True)
