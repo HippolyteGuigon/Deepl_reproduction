@@ -1,18 +1,12 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
-import math, copy, re
+import math
 import warnings
-import pandas as pd
-import numpy as np
 import logging
-import seaborn as sns
-import torchtext
-import matplotlib.pyplot as plt
 import sys
-import tensorflow_hub as hub
 import torch.optim as optim
-from transformers import AutoModel, AutoTokenizer, BertTokenizer
+from transformers import BertTokenizer
 from sklearn.model_selection import train_test_split
 
 warnings.filterwarnings("ignore")
@@ -25,8 +19,10 @@ formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
 from Deepl_reproduction.logs.logs import main
 from Deepl_reproduction.model.model_save_load import save_model, load_model
-from torch.utils.data import Dataset, DataLoader, TensorDataset
-from data_loading import load_all_data, load_data_to_front_database, load_data
+from torch.utils.data import DataLoader, TensorDataset
+from data_loading import load_data_to_front_database, load_data
+
+main()
 
 
 class Embedding(nn.Module):
