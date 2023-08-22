@@ -334,7 +334,7 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
     
     # Move model to the specified device
     model.to(device)
-    get_translation()
+    #get_translation()
     # Training loop
     for epoch in range(num_epochs):
         model.train()
