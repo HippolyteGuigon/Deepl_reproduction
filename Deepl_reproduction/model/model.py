@@ -13,6 +13,7 @@ import sys
 import tensorflow_hub as hub
 import torch.optim as optim
 from transformers import AutoModel, AutoTokenizer, BertTokenizer
+from sklearn.model_selection import train_test_split
 
 warnings.filterwarnings("ignore")
 
@@ -23,7 +24,7 @@ logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
 from Deepl_reproduction.logs.logs import main
-from Deepl_reproduction.model.model_save_load import save_model
+from Deepl_reproduction.model.model_save_load import save_model, load_model
 from torch.utils.data import Dataset, DataLoader,TensorDataset
 from data_loading import load_all_data, load_data_to_front_database, load_data
     
@@ -318,17 +319,22 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
     trg_tokens = [english_tokenizer.encode(text, add_special_tokens=True, max_length=max_seq_length, pad_to_max_length=True,truncation=True) for text in trg_sentences]
     trg_tensor = torch.tensor(trg_tokens, dtype=torch.long)
     
+    src_train, src_test, trg_train, trg_test = train_test_split(src_tensor, trg_tensor, test_size=0.2, random_state=42)
+
     # Create DataLoader
-    dataset = TensorDataset(src_tensor, trg_tensor)
-    train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    
+    train_dataset = TensorDataset(src_train, trg_train)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+    test_dataset = TensorDataset(src_test, trg_test)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+        
     # Set up loss function and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     
     # Move model to the specified device
     model.to(device)
-    
+    get_translation()
     # Training loop
     for epoch in range(num_epochs):
         model.train()
@@ -354,6 +360,29 @@ def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learnin
         logging.info("Saving model...")
         save_model(model)
     logging.warning("Training finished.")
+
+def get_translation():
+    model=load_model()
+    model.eval()
+    english_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    french_tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-base-french-europeana-cased')
+
+    # Phrase en français que vous voulez traduire
+    french_sentence = "Bonjour, comment vas-tu ?"
+
+    # Tokeniser et encoder la phrase en français
+    src_tokenized = french_tokenizer.encode(french_sentence, add_special_tokens=True, max_length=15, pad_to_max_length=True, truncation=True)
+    src_tensor = torch.tensor(src_tokenized, dtype=torch.long).unsqueeze(0)  # Ajouter une dimension pour le lot (batch)
+
+    # Utiliser le modèle pour effectuer la traduction
+    with torch.no_grad():
+        translation_ids = model.decode(src_tensor, trg=None)  # trg=None car nous n'avons pas besoin de la cible pour la traduction
+
+    # Décoder les identifiants de tokens en phrases en anglais
+    english_translation = english_tokenizer.decode(translation_ids, skip_special_tokens=True)
+
+    print("Phrase en français:", french_sentence)
+    print("Traduction en anglais:", english_translation)
 
 if __name__=="__main__": 
     model = Transformer(embed_dim=16, src_vocab_size=32000, target_vocab_size=32000, seq_length=64, num_layers=3, expansion_factor=2, n_heads=8)
