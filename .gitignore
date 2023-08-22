@@ -1,10 +1,16 @@
 #Files to exclude
 
 *.txt
-*.ipynb 
+*.ipynb
 *.csv
-*.pt 
-
+*.pt
+.bash_history
+.bash_logout
+.bashrc
+.config/*
+.keras/*
+.profile
+get-pip.py
 model_example.py
 !requirements.txt
 
