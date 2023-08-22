@@ -5,7 +5,7 @@
 *.csv
 *.pt
 .bash_history
-.bash_logout
+.bash_logout 
 .bashrc
 .config/*
 .keras/*
