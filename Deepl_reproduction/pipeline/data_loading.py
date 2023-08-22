@@ -1,6 +1,5 @@
 import os 
 import pandas as pd
-import mysql.connector
 import pymysql
 import logging
 import time

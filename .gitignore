@@ -9,9 +9,11 @@
 .bashrc
 .config/*
 .keras/*
+.local/*
 .profile
 get-pip.py
 model_example.py
+.gitconfig
 !requirements.txt
 
 # Byte-compiled / optimized / DLL files
