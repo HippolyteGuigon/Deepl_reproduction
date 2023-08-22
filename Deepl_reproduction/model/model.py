@@ -376,7 +376,7 @@ def get_translation():
 
     # Utiliser le modèle pour effectuer la traduction
     with torch.no_grad():
-        translation_ids = model.decode(src_tensor, trg=None)  # trg=None car nous n'avons pas besoin de la cible pour la traduction
+        translation_ids = model.decode(src_tensor, trg="This is a test sentence")  # trg=None car nous n'avons pas besoin de la cible pour la traduction
 
     # Décoder les identifiants de tokens en phrases en anglais
     english_translation = english_tokenizer.decode(translation_ids, skip_special_tokens=True)
