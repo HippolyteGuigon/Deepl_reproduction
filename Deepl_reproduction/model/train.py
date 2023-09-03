@@ -2,26 +2,27 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 import torch.utils.data
 import time
+import os
 from model import Transformer, LabelSmoothedCE
 from dataloader import SequenceLoader
 from utils import *
 
 # Data parameters
-data_folder = '/media/ssd/transformer data'  # folder with data files
+data_folder = os.path.join(os.getcwd(),"Deepl_reproduction/model")  # folder with data files
 
 # Model parameters
-d_model = 512  # size of vectors throughout the transformer model
-n_heads = 8  # number of heads in the multi-head attention
+d_model = 256  # size of vectors throughout the transformer model
+n_heads = 4  # number of heads in the multi-head attention
 d_queries = 64  # size of query vectors (and also the size of the key vectors) in the multi-head attention
 d_values = 64  # size of value vectors in the multi-head attention
 d_inner = 2048  # an intermediate size in the position-wise FC
-n_layers = 6  # number of layers in the Encoder and Decoder
+n_layers = 4  # number of layers in the Encoder and Decoder
 dropout = 0.1  # dropout probability
 positional_encoding = get_positional_encoding(d_model=d_model,
                                               max_length=160)  # positional encodings up to the maximum possible pad-length
 
 # Learning parameters
-checkpoint = 'transformer_checkpoint.pth.tar'  # path to model checkpoint, None if none
+checkpoint = None  # path to model checkpoint, None if none
 tokens_in_batch = 2000  # batch size in target language tokens
 batches_per_step = 25000 // tokens_in_batch  # perform a training step, i.e. update parameters, once every so many batches
 print_frequency = 20  # print status once every so many steps
@@ -45,14 +46,14 @@ def main():
     global checkpoint, step, start_epoch, epoch, epochs
 
     # Initialize data-loaders
-    train_loader = SequenceLoader(data_folder="/media/ssd/transformer data",
+    train_loader = SequenceLoader(data_folder=data_folder,
                                   source_suffix="en",
-                                  target_suffix="de",
+                                  target_suffix="fr",
                                   split="train",
                                   tokens_in_batch=tokens_in_batch)
-    val_loader = SequenceLoader(data_folder="/media/ssd/transformer data",
+    val_loader = SequenceLoader(data_folder=data_folder,
                                 source_suffix="en",
-                                target_suffix="de",
+                                target_suffix="fr",
                                 split="val",
                                 tokens_in_batch=tokens_in_batch)
 

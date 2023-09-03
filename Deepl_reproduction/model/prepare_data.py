@@ -1,8 +1,16 @@
 from utils import *
+import os
+from Deepl_reproduction.pipeline.data_loading import load_all_data
 
-download_data(data_folder="/media/ssd/transformer data")
+data_path="Deepl_reproduction/model/data/full_df.csv"
 
-prepare_data(data_folder="/media/ssd/transformer data",
+if not os.path.exists(data_path):
+    if not os.path.exists("Deepl_reproduction/model/data"):
+        os.mkdir("Deepl_reproduction/model/data")
+    data=load_all_data()
+    data.to_csv(data_path,index=False)
+
+prepare_data(data_folder=data_path,
              euro_parl=True,
              common_crawl=True,
              news_commentary=True,

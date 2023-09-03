@@ -2,11 +2,14 @@ import torch
 import os
 import wget
 import tarfile
+import numpy as np
 import shutil
 import codecs
 import youtokentome
 import math
+import pandas as pd
 from tqdm import tqdm
+from sklearn.model_selection import train_test_split
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -67,7 +70,7 @@ def download_data(data_folder):
         os.rmdir(os.path.join(data_folder, "extracted files", dir))
 
 
-def prepare_data(data_folder, euro_parl=True, common_crawl=True, news_commentary=True, min_length=3, max_length=100,
+def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, news_commentary=True, min_length=3, max_length=100,
                  max_length_ratio=1.5, retain_case=True):
     """
     Filters and prepares the training data, trains a Byte-Pair Encoding (BPE) model.
@@ -82,68 +85,82 @@ def prepare_data(data_folder, euro_parl=True, common_crawl=True, news_commentary
     :param retain_case: retain case?
     """
     # Read raw files and combine
-    german = list()
+    french = list()
     english = list()
     files = list()
-    assert euro_parl or common_crawl or news_commentary, "Set at least one dataset to True!"
-    if euro_parl:
-        files.append("europarl-v7.de-en")
-    if common_crawl:
-        files.append("commoncrawl.de-en")
-    if news_commentary:
-        files.append("news-commentary-v9.de-en")
-    print("\nReading extracted files and combining...")
-    for file in files:
-        with codecs.open(os.path.join(data_folder, "extracted files", file + ".de"), "r", encoding="utf-8") as f:
-            if retain_case:
-                german.extend(f.read().split("\n"))
-            else:
-                german.extend(f.read().lower().split("\n"))
-        with codecs.open(os.path.join(data_folder, "extracted files", file + ".en"), "r", encoding="utf-8") as f:
-            if retain_case:
-                english.extend(f.read().split("\n"))
-            else:
-                english.extend(f.read().lower().split("\n"))
-        assert len(english) == len(german)
-    print(german)
-    print(english)
+    
+    full_data=pd.read_csv(data_folder)
+    X_train=full_data.loc[:np.floor(full_data.shape[0]*0.8),:]
+    train_shape=X_train.shape[0]
+    X_test=full_data.loc[train_shape:train_shape+(full_data.shape[0]-train_shape)//2:,:]   
+    X_val=full_data.loc[train_shape+(full_data.shape[0]-train_shape)//2:,:]   
+    
+    os.chdir("Deepl_reproduction/model")
+    data_folder=os.getcwd()
+    french_sentences=X_train["french"].tolist()
+    english_sentences=X_train["english"].tolist()
+    french_sentences=[sentence.lower() for sentence in french_sentences]
+    english_sentences=[sentence.lower() for sentence in english_sentences]
+    french.extend(french_sentences)
+    english.extend(english_sentences)
+
+    french_test=X_test["french"].tolist()
+    english_test=X_test["english"].tolist()
+    french_test=[sentence.lower() for sentence in french_test]
+    english_test=[sentence.lower() for sentence in english_test]
+
+    french_val=X_val["french"].tolist()
+    english_val=X_val["english"].tolist()
+    french_val=[sentence.lower() for sentence in french_val]
+    english_val=[sentence.lower() for sentence in english_val]
+
+    with open(os.path.join(data_folder, "test.fr"), "w", encoding="utf-8") as f:
+        f.write("\n".join(french_test))
+    with open(os.path.join(data_folder, "test.en"), "w", encoding="utf-8") as f:
+        f.write("\n".join(english_test))
+    with open(os.path.join(data_folder, "val.fr"), "w", encoding="utf-8") as f:
+        f.write("\n".join(french_val))
+    with open(os.path.join(data_folder, "val.en"), "w", encoding="utf-8") as f:
+        f.write("\n".join(english_val))
+
+    print("\nCombining...")
     # Write to file so stuff can be freed from memory
     print("\nWriting to single files...")
-    with codecs.open(os.path.join(data_folder, "train.en"), "w", encoding="utf-8") as f:
+    with open(os.path.join(data_folder, "train.en"), "w", encoding="utf-8") as f:
         f.write("\n".join(english))
-    with codecs.open(os.path.join(data_folder, "train.de"), "w", encoding="utf-8") as f:
-        f.write("\n".join(german))
-    with codecs.open(os.path.join(data_folder, "train.ende"), "w", encoding="utf-8") as f:
-        f.write("\n".join(english + german))
-    del english, german  # free some RAM
+    with open(os.path.join(data_folder, "train.fr"), "w", encoding="utf-8") as f:
+        f.write("\n".join(french))
+    with open(os.path.join(data_folder, "train.fren"), "w", encoding="utf-8") as f:
+        f.write("\n".join(french + english))
+    del english, french  # free some RAM
 
     # Perform BPE
     print("\nLearning BPE...")
-    youtokentome.BPE.train(data=os.path.join(data_folder, "train.ende"), vocab_size=37000,
+    youtokentome.BPE.train(data=os.path.join(data_folder, "train.fren"), vocab_size=37000,
                            model=os.path.join(data_folder, "bpe.model"))
 
     # Load BPE model
     print("\nLoading BPE model...")
     bpe_model = youtokentome.BPE(model=os.path.join(data_folder, "bpe.model"))
 
-    # Re-read English, German
+    # Re-read English, French
     print("\nRe-reading single files...")
-    with codecs.open(os.path.join(data_folder, "train.en"), "r", encoding="utf-8") as f:
+    with open(os.path.join(data_folder, "train.en"), "r", encoding="utf-8") as f:
         english = f.read().split("\n")
-    with codecs.open(os.path.join(data_folder, "train.de"), "r", encoding="utf-8") as f:
-        german = f.read().split("\n")
+    with open(os.path.join(data_folder, "train.fr"), "r", encoding="utf-8") as f:
+        french = f.read().split("\n")
 
     # Filter
     print("\nFiltering...")
     pairs = list()
-    for en, de in tqdm(zip(english, german), total=len(english)):
+    for en, de in tqdm(zip(english, french), total=len(english)):
         en_tok = bpe_model.encode(en, output_type=youtokentome.OutputType.ID)
-        de_tok = bpe_model.encode(de, output_type=youtokentome.OutputType.ID)
+        fr_tok = bpe_model.encode(de, output_type=youtokentome.OutputType.ID)
         len_en_tok = len(en_tok)
-        len_de_tok = len(de_tok)
+        len_fr_tok = len(fr_tok)
         if min_length < len_en_tok < max_length and \
-                min_length < len_de_tok < max_length and \
-                1. / max_length_ratio <= len_de_tok / len_en_tok <= max_length_ratio:
+                min_length < len_fr_tok < max_length and \
+                1. / max_length_ratio <= len_fr_tok / len_en_tok <= max_length_ratio:
             pairs.append((en, de))
         else:
             continue
@@ -151,16 +168,16 @@ def prepare_data(data_folder, euro_parl=True, common_crawl=True, news_commentary
             len(english) - len(pairs)) / len(english)))
 
     # Rewrite files
-    english, german = zip(*pairs)
+    english, french = zip(*pairs)
     print("\nRe-writing filtered sentences to single files...")
     os.remove(os.path.join(data_folder, "train.en"))
-    os.remove(os.path.join(data_folder, "train.de"))
-    os.remove(os.path.join(data_folder, "train.ende"))
+    os.remove(os.path.join(data_folder, "train.fr"))
+    os.remove(os.path.join(data_folder, "train.fren"))
     with codecs.open(os.path.join(data_folder, "train.en"), "w", encoding="utf-8") as f:
         f.write("\n".join(english))
-    with codecs.open(os.path.join(data_folder, "train.de"), "w", encoding="utf-8") as f:
-        f.write("\n".join(german))
-    del english, german, bpe_model, pairs
+    with codecs.open(os.path.join(data_folder, "train.fr"), "w", encoding="utf-8") as f:
+        f.write("\n".join(french))
+    del english, french, bpe_model, pairs
 
     print("\n...DONE!\n")
 
