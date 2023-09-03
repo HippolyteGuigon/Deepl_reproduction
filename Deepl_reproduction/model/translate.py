@@ -7,10 +7,10 @@ import math
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # BPE Model
-bpe_model = youtokentome.BPE(model="/media/ssd/transformer data/bpe.model")
+bpe_model = youtokentome.BPE(model="Deepl_reproduction/model/bpe.model")
 
 # Transformer model
-checkpoint = torch.load("averaged_transformer_checkpoint.pth.tar")
+checkpoint = torch.load("Deepl_reproduction/model/step22_transformer_checkpoint.pth.tar")
 model = checkpoint['model'].to(device)
 model.eval()
 
@@ -123,15 +123,15 @@ def translate(source_sequence, beam_size=4, length_norm_coefficient=0.6):
 
         # Decode the hypotheses
         all_hypotheses = list()
-        for i, h in enumerate(bpe_model.decode(completed_hypotheses, ignore_ids=[0, 2, 3])):
+        for i, h in enumerate(bpe_model.decode(completed_hypotheses)):
             all_hypotheses.append({"hypothesis": h, "score": completed_hypotheses_scores[i]})
 
         # Find the best scoring completed hypothesis
         i = completed_hypotheses_scores.index(max(completed_hypotheses_scores))
         best_hypothesis = all_hypotheses[i]["hypothesis"]
-
+        print(best_hypothesis)
         return best_hypothesis, all_hypotheses
 
 
 if __name__ == '__main__':
-    translate("Anyone who retains the ability to recognise beauty will never become old.")
+    translate("Bonjour, je m'appelle Hippolyte")

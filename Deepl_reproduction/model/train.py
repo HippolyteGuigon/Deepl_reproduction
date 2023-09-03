@@ -13,10 +13,10 @@ data_folder = os.path.join(os.getcwd(),"Deepl_reproduction/model")  # folder wit
 # Model parameters
 d_model = 256  # size of vectors throughout the transformer model
 n_heads = 4  # number of heads in the multi-head attention
-d_queries = 64  # size of query vectors (and also the size of the key vectors) in the multi-head attention
-d_values = 64  # size of value vectors in the multi-head attention
-d_inner = 2048  # an intermediate size in the position-wise FC
-n_layers = 4  # number of layers in the Encoder and Decoder
+d_queries = 32  # size of query vectors (and also the size of the key vectors) in the multi-head attention
+d_values = 32  # size of value vectors in the multi-head attention
+d_inner = 256  # an intermediate size in the position-wise FC
+n_layers = 3  # number of layers in the Encoder and Decoder
 dropout = 0.1  # dropout probability
 positional_encoding = get_positional_encoding(d_model=d_model,
                                               max_length=160)  # positional encodings up to the maximum possible pad-length
@@ -197,8 +197,7 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
             start_step_time = time.time()
 
             # If this is the last one or two epochs, save checkpoints at regular intervals for averaging
-            if epoch in [epochs - 1, epochs - 2] and step % 1500 == 0:  # 'epoch' is 0-indexed
-                save_checkpoint(epoch, model, optimizer, prefix='step' + str(step) + "_")
+            save_checkpoint(epoch, model, optimizer, prefix='step' + str(step) + "_")
 
         # Reset data time
         start_data_time = time.time()
