@@ -10,7 +10,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 bpe_model = youtokentome.BPE(model="Deepl_reproduction/model/bpe.model")
 
 # Transformer model
-checkpoint = torch.load("Deepl_reproduction/model/step22_transformer_checkpoint.pth.tar")
+checkpoint = torch.load("Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar")
 model = checkpoint['model'].to(device)
 model.eval()
 
@@ -129,7 +129,7 @@ def translate(source_sequence, beam_size=4, length_norm_coefficient=0.6):
         # Find the best scoring completed hypothesis
         i = completed_hypotheses_scores.index(max(completed_hypotheses_scores))
         best_hypothesis = all_hypotheses[i]["hypothesis"]
-        print(best_hypothesis)
+        best_hypothesis=best_hypothesis.replace("<BOS>","")
         return best_hypothesis, all_hypotheses
 
 

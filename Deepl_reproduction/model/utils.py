@@ -99,8 +99,10 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
     data_folder=os.getcwd()
     french_sentences=X_train["french"].tolist()
     english_sentences=X_train["english"].tolist()
-    french_sentences=[sentence.lower() for sentence in french_sentences]
-    english_sentences=[sentence.lower() for sentence in english_sentences]
+    french_sentences=[str(sentence).lower() for sentence in french_sentences]
+    english_sentences=[str(sentence).lower() for sentence in english_sentences]
+
+    assert len(french_sentences)==len(english_sentences), "The two sentence sets do not have the same size"
     french.extend(french_sentences)
     english.extend(english_sentences)
 
@@ -230,7 +232,7 @@ def save_checkpoint(epoch, model, optimizer, prefix=''):
              'model': model,
              'optimizer': optimizer}
     filename = prefix + 'transformer_checkpoint.pth.tar'
-    torch.save(state, filename)
+    torch.save(state, os.path.join("Deepl_reproduction/model",filename))
 
 
 def change_lr(optimizer, new_lr):

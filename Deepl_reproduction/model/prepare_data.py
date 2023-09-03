@@ -1,6 +1,6 @@
 from utils import *
 import os
-from Deepl_reproduction.pipeline.data_loading import load_all_data
+from Deepl_reproduction.pipeline.data_loading import *
 
 data_path="Deepl_reproduction/model/data/full_df.csv"
 

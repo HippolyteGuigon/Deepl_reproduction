@@ -25,7 +25,7 @@ Deepl_reproduction/model/train.en
 Deepl_reproduction/model/train.fr
 Deepl_reproduction/model/val.en
 Deepl_reproduction/model/val.fr
-Deepl_reproduction/model/*transformer_checkpoint.pth.tar
+Deepl_reproduction/model/*.pth.tar
 !requirements.txt
 
 # Byte-compiled / optimized / DLL files

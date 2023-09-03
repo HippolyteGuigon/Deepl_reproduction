@@ -35,7 +35,7 @@ db_password = main_params["db_password"]
 db_host = main_params["db_host"]
 db_name = main_params["db_name"]
 
-def get_dataframe_from_bq(table_id: str, project_id: str="deepl-reprodution", dataset_id: str="processed_data")->pd.DataFrame:
+def get_dataframe_from_bq(table_id: str, project_id: str="deepl-reprodution", dataset_id: str="processed_data", kaggle_length: str=300000)->pd.DataFrame:
     """
     The goal of this function
     is to get all the data available
@@ -48,6 +48,9 @@ def get_dataframe_from_bq(table_id: str, project_id: str="deepl-reprodution", da
         id containing the data
         -dataset_id: str: The dataset id
         containing the data
+        -kaggle_length: str: How many data
+        should be loaded from the Kaggle dataset
+        of 
     Returns:
         -loaded_df: pd.DataFrame: The 
         DataFrame containing the full data
@@ -57,7 +60,7 @@ def get_dataframe_from_bq(table_id: str, project_id: str="deepl-reprodution", da
         query = f"""
         SELECT *
         FROM `{project_id}.{dataset_id}.{table_id}`
-        LIMIT 500000
+        LIMIT {kaggle_length}
         """
     else:
 
@@ -72,7 +75,7 @@ def get_dataframe_from_bq(table_id: str, project_id: str="deepl-reprodution", da
 
     return loaded_df
 
-def load_all_data()->pd.DataFrame:
+def load_all_data(kaggle_length: str=300000)->pd.DataFrame:
     """
     The goal of this function is
     to load all tables in the bigquery
@@ -80,7 +83,10 @@ def load_all_data()->pd.DataFrame:
     Learning pipeline
     
     Arguments:
-        -None
+        -kaggle_length: str: The
+        number of sentences that
+        should be extracted from
+        the Kaggle dataset
     Returns:
         -full_data: pd.DataFrame: The DataFrame
         containing all data
@@ -104,14 +110,14 @@ def load_all_data()->pd.DataFrame:
             df=get_dataframe_from_bq(id)
             full_data=pd.concat([full_data,df[["content", "content_translated"]].rename(columns={"content":"french", "content_translated":"english"})])
         elif id=="processed_kaggle_dataset":
-            df=get_dataframe_from_bq(id)
+            df=get_dataframe_from_bq(id, kaggle_length=kaggle_length)
             full_data=pd.concat([full_data,df[["french", "english"]]])
     full_data.drop_duplicates(inplace=True)
 
     return full_data
 
-def load_data_to_front_database()->None:
-    full_data=load_all_data()
+def load_data_to_front_database(kaggle_length: str=300000)->None:
+    full_data=load_all_data(kaggle_length=kaggle_length)
     engine = create_engine(f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}')
     full_data.to_sql('deepl_table', con=engine, if_exists='replace', index=False)
     

@@ -22,7 +22,7 @@ positional_encoding = get_positional_encoding(d_model=d_model,
                                               max_length=160)  # positional encodings up to the maximum possible pad-length
 
 # Learning parameters
-checkpoint = None  # path to model checkpoint, None if none
+checkpoint = "Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar"  # path to model checkpoint, None if none
 tokens_in_batch = 2000  # batch size in target language tokens
 batches_per_step = 25000 // tokens_in_batch  # perform a training step, i.e. update parameters, once every so many batches
 print_frequency = 20  # print status once every so many steps
@@ -47,13 +47,13 @@ def main():
 
     # Initialize data-loaders
     train_loader = SequenceLoader(data_folder=data_folder,
-                                  source_suffix="en",
-                                  target_suffix="fr",
+                                  source_suffix="fr",
+                                  target_suffix="en",
                                   split="train",
                                   tokens_in_batch=tokens_in_batch)
     val_loader = SequenceLoader(data_folder=data_folder,
-                                source_suffix="en",
-                                target_suffix="fr",
+                                source_suffix="fr",
+                                target_suffix="en",
                                 split="val",
                                 tokens_in_batch=tokens_in_batch)
 
@@ -193,11 +193,15 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
                                                                         data_time=data_time,
                                                                         losses=losses))
 
-            # Reset step time
-            start_step_time = time.time()
+                # Reset step time
+                start_step_time = time.time()
 
             # If this is the last one or two epochs, save checkpoints at regular intervals for averaging
-            save_checkpoint(epoch, model, optimizer, prefix='step' + str(step) + "_")
+                save_checkpoint(epoch, model, optimizer, prefix='step' + "last" + "_")
+                
+                from translate import translate
+                traduction, _ = translate("Bonjour, je m'appelle Hippolyte")
+                print("Traduction of 'Bonjour, je m'appelle Hippolyte:'",traduction)
 
         # Reset data time
         start_data_time = time.time()
