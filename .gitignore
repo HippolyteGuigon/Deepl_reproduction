@@ -4,6 +4,12 @@
 *.ipynb
 *.csv
 *.pt
+.git-credentials
+.gitconfig
+.local/
+.ssh/
+.vscode-server/
+.wget-hsts
 .bash_history
 .bash_logout 
 .bashrc
@@ -13,7 +19,14 @@
 .profile
 get-pip.py
 model_example.py
-.gitconfig
+Deepl_reproduction/model/bpe.model
+Deepl_reproduction/model/test.en
+Deepl_reproduction/model/test.fr
+Deepl_reproduction/model/train.en
+Deepl_reproduction/model/train.fr
+Deepl_reproduction/model/val.en
+Deepl_reproduction/model/val.fr
+Deepl_reproduction/model/*.pth.tar
 !requirements.txt
 
 # Byte-compiled / optimized / DLL files

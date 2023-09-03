@@ -1,391 +1,564 @@
-import torch.nn as nn
 import torch
+from torch import nn
+import math
 import torch.nn.functional as F
-import math,copy,re
-import warnings
-import pandas as pd
-import numpy as np
-import logging
-import seaborn as sns
-import torchtext
-import matplotlib.pyplot as plt
-import sys
-import torch.optim as optim
-from transformers import AutoModel, AutoTokenizer, BertTokenizer
-from sklearn.model_selection import train_test_split
+from torch.nn.utils.rnn import pack_padded_sequence
 
-warnings.filterwarnings("ignore")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-sys.path.insert(0,"Deepl_reproduction/pipeline")
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+class MultiHeadAttention(nn.Module):
+    """
+    The Multi-Head Attention sublayer.
+    """
 
-from Deepl_reproduction.logs.logs import main
-from Deepl_reproduction.model.model_save_load import save_model, load_model
-from torch.utils.data import Dataset, DataLoader,TensorDataset
-from data_loading import load_all_data, load_data_to_front_database, load_data
-    
-class Embedding(nn.Module):
-    def __init__(self, vocab_size: int, embed_dim: int):
+    def __init__(self, d_model, n_heads, d_queries, d_values, dropout, in_decoder=False):
         """
-        The goal of this class is
-        to embed each word entering
-        the model
-        
-        Arguments:
-            -vocab_size: int: The size
-            of the vocabulary (in the 
-            language)
-            -embed_dim: int: The dimension
-            of the embedding. In which dimension
-            are input words embedded
+        :param d_model: size of vectors throughout the transformer model, i.e. input and output sizes for this sublayer
+        :param n_heads: number of heads in the multi-head attention
+        :param d_queries: size of query vectors (and also the size of the key vectors)
+        :param d_values: size of value vectors
+        :param dropout: dropout probability
+        :param in_decoder: is this Multi-Head Attention sublayer instance in the decoder?
         """
+        super(MultiHeadAttention, self).__init__()
 
-        super(Embedding, self).__init__()
-        self.embed=nn.Embedding(vocab_size,embed_dim)
+        self.d_model = d_model
+        self.n_heads = n_heads
 
-    def forward(self, x: torch.tensor)->torch.tensor:
+        self.d_queries = d_queries
+        self.d_values = d_values
+        self.d_keys = d_queries  # size of key vectors, same as of the query vectors to allow dot-products for similarity
+
+        self.in_decoder = in_decoder
+
+        # A linear projection to cast (n_heads sets of) queries from the input query sequences
+        self.cast_queries = nn.Linear(d_model, n_heads * d_queries)
+
+        # A linear projection to cast (n_heads sets of) keys and values from the input reference sequences
+        self.cast_keys_values = nn.Linear(d_model, n_heads * (d_queries + d_values))
+
+        # A linear projection to cast (n_heads sets of) computed attention-weighted vectors to output vectors (of the same size as input query vectors)
+        self.cast_output = nn.Linear(n_heads * d_values, d_model)
+
+        # Softmax layer
+        self.softmax = nn.Softmax(dim=-1)
+
+        # Layer-norm layer
+        self.layer_norm = nn.LayerNorm(d_model)
+
+        # Dropout layer
+        self.apply_dropout = nn.Dropout(dropout)
+
+    def forward(self, query_sequences, key_value_sequences, key_value_sequence_lengths):
         """
-        The goal of this function is
-        to activate the embedding,
-        transforming a word input 
-        vector into an embedded 
-        output vector 
-        
-        Arguments:
-            -x: torch.tensor: The input
-            word to be embedded 
-        Returns:
-            -out: torch.tensor: The output
-            embedded vector 
+        Forward prop.
+
+        :param query_sequences: the input query sequences, a tensor of size (N, query_sequence_pad_length, d_model)
+        :param key_value_sequences: the sequences to be queried against, a tensor of size (N, key_value_sequence_pad_length, d_model)
+        :param key_value_sequence_lengths: true lengths of the key_value_sequences, to be able to ignore pads, a tensor of size (N)
+        :return: attention-weighted output sequences for the query sequences, a tensor of size (N, query_sequence_pad_length, d_model)
         """
+        batch_size = query_sequences.size(0)  # batch size (N) in number of sequences
+        query_sequence_pad_length = query_sequences.size(1)
+        key_value_sequence_pad_length = key_value_sequences.size(1)
 
-        out=self.embed(x)
-        
-        return out
+        # Is this self-attention?
+        self_attention = torch.equal(key_value_sequences, query_sequences)
 
-class PositionalEmbedding(nn.Module):
-    def __init__(self, max_seq_len: int, embed_model_dim: int):
+        # Store input for adding later
+        input_to_add = query_sequences.clone()
+
+        # Apply layer normalization
+        query_sequences = self.layer_norm(query_sequences)  # (N, query_sequence_pad_length, d_model)
+        # If this is self-attention, do the same for the key-value sequences (as they are the same as the query sequences)
+        # If this isn't self-attention, they will already have been normed in the last layer of the Encoder (from whence they came)
+        if self_attention:
+            key_value_sequences = self.layer_norm(key_value_sequences)  # (N, key_value_sequence_pad_length, d_model)
+
+        # Project input sequences to queries, keys, values
+        queries = self.cast_queries(query_sequences)  # (N, query_sequence_pad_length, n_heads * d_queries)
+        keys, values = self.cast_keys_values(key_value_sequences).split(split_size=self.n_heads * self.d_keys,
+                                                                        dim=-1)  # (N, key_value_sequence_pad_length, n_heads * d_keys), (N, key_value_sequence_pad_length, n_heads * d_values)
+
+        # Split the last dimension by the n_heads subspaces
+        queries = queries.contiguous().view(batch_size, query_sequence_pad_length, self.n_heads,
+                                            self.d_queries)  # (N, query_sequence_pad_length, n_heads, d_queries)
+        keys = keys.contiguous().view(batch_size, key_value_sequence_pad_length, self.n_heads,
+                                      self.d_keys)  # (N, key_value_sequence_pad_length, n_heads, d_keys)
+        values = values.contiguous().view(batch_size, key_value_sequence_pad_length, self.n_heads,
+                                          self.d_values)  # (N, key_value_sequence_pad_length, n_heads, d_values)
+
+        # Re-arrange axes such that the last two dimensions are the sequence lengths and the queries/keys/values
+        # And then, for convenience, convert to 3D tensors by merging the batch and n_heads dimensions
+        # This is to prepare it for the batch matrix multiplication (i.e. the dot product)
+        queries = queries.permute(0, 2, 1, 3).contiguous().view(-1, query_sequence_pad_length,
+                                                                self.d_queries)  # (N * n_heads, query_sequence_pad_length, d_queries)
+        keys = keys.permute(0, 2, 1, 3).contiguous().view(-1, key_value_sequence_pad_length,
+                                                          self.d_keys)  # (N * n_heads, key_value_sequence_pad_length, d_keys)
+        values = values.permute(0, 2, 1, 3).contiguous().view(-1, key_value_sequence_pad_length,
+                                                              self.d_values)  # (N * n_heads, key_value_sequence_pad_length, d_values)
+
+        # Perform multi-head attention
+
+        # Perform dot-products
+        attention_weights = torch.bmm(queries, keys.permute(0, 2,
+                                                            1))  # (N * n_heads, query_sequence_pad_length, key_value_sequence_pad_length)
+
+        # Scale dot-products
+        attention_weights = (1. / math.sqrt(
+            self.d_keys)) * attention_weights  # (N * n_heads, query_sequence_pad_length, key_value_sequence_pad_length)
+
+        # Before computing softmax weights, prevent queries from attending to certain keys
+
+        # MASK 1: keys that are pads
+        not_pad_in_keys = torch.LongTensor(range(key_value_sequence_pad_length)).unsqueeze(0).unsqueeze(0).expand_as(
+            attention_weights).to(device)  # (N * n_heads, query_sequence_pad_length, key_value_sequence_pad_length)
+        not_pad_in_keys = not_pad_in_keys < key_value_sequence_lengths.repeat_interleave(self.n_heads).unsqueeze(
+            1).unsqueeze(2).expand_as(
+            attention_weights)  # (N * n_heads, query_sequence_pad_length, key_value_sequence_pad_length)
+        # Note: PyTorch auto-broadcasts singleton dimensions in comparison operations (as well as arithmetic operations)
+
+        # Mask away by setting such weights to a large negative number, so that they evaluate to 0 under the softmax
+        attention_weights = attention_weights.masked_fill(~not_pad_in_keys, -float(
+            'inf'))  # (N * n_heads, query_sequence_pad_length, key_value_sequence_pad_length)
+
+        # MASK 2: if this is self-attention in the decoder, keys chronologically ahead of queries
+        if self.in_decoder and self_attention:
+            # Therefore, a position [n, i, j] is valid only if j <= i
+            # torch.tril(), i.e. lower triangle in a 2D matrix, sets j > i to 0
+            not_future_mask = torch.ones_like(
+                attention_weights).tril().bool().to(
+                device)  # (N * n_heads, query_sequence_pad_length, key_value_sequence_pad_length)
+
+            # Mask away by setting such weights to a large negative number, so that they evaluate to 0 under the softmax
+            attention_weights = attention_weights.masked_fill(~not_future_mask, -float(
+                'inf'))  # (N * n_heads, query_sequence_pad_length, key_value_sequence_pad_length)
+
+        # Compute softmax along the key dimension
+        attention_weights = self.softmax(
+            attention_weights)  # (N * n_heads, query_sequence_pad_length, key_value_sequence_pad_length)
+
+        # Apply dropout
+        attention_weights = self.apply_dropout(
+            attention_weights)  # (N * n_heads, query_sequence_pad_length, key_value_sequence_pad_length)
+
+        # Calculate sequences as the weighted sums of values based on these softmax weights
+        sequences = torch.bmm(attention_weights, values)  # (N * n_heads, query_sequence_pad_length, d_values)
+
+        # Unmerge batch and n_heads dimensions and restore original order of axes
+        sequences = sequences.contiguous().view(batch_size, self.n_heads, query_sequence_pad_length,
+                                                self.d_values).permute(0, 2, 1,
+                                                                       3)  # (N, query_sequence_pad_length, n_heads, d_values)
+
+        # Concatenate the n_heads subspaces (each with an output of size d_values)
+        sequences = sequences.contiguous().view(batch_size, query_sequence_pad_length,
+                                                -1)  # (N, query_sequence_pad_length, n_heads * d_values)
+
+        # Transform the concatenated subspace-sequences into a single output of size d_model
+        sequences = self.cast_output(sequences)  # (N, query_sequence_pad_length, d_model)
+
+        # Apply dropout and residual connection
+        sequences = self.apply_dropout(sequences) + input_to_add  # (N, query_sequence_pad_length, d_model)
+
+        return sequences
+
+
+class PositionWiseFCNetwork(nn.Module):
+    """
+    The Position-Wise Feed Forward Network sublayer.
+    """
+
+    def __init__(self, d_model, d_inner, dropout):
         """
-        The goal of this class
-        is to generate positional
-        embedding so that word order
-        in the original sequence is 
-        maintained
-        
-        Arguments:
-            -max_seq_len: int: The maximum 
-            number of words in each sequence
-            that can be put in the embedding matrix
-            -embed_model_dim: int: The dimension
-            of the embedding generated by the 
-            model
-        Returns:
-            -None
+        :param d_model: size of vectors throughout the transformer model, i.e. input and output sizes for this sublayer
+        :param d_inner: an intermediate size
+        :param dropout: dropout probability
         """
+        super(PositionWiseFCNetwork, self).__init__()
 
-        super(PositionalEmbedding,self).__init__()
-        self.embed_dim=embed_model_dim
+        self.d_model = d_model
+        self.d_inner = d_inner
 
-        pe=torch.zeros(max_seq_len,self.embed_dim)
-        for pos in range(max_seq_len):
-            for i in range(0,self.embed_dim,2):
-                pe[pos,i]=math.sin(pos/(10000**((2*i)/self.embed_dim)))
-                pe[pos, i+1]=math.cos(pos/(10000**((2*(i+1))/self.embed_dim)))
+        # Layer-norm layer
+        self.layer_norm = nn.LayerNorm(d_model)
 
-        pe=pe.unsqueeze(0)
-        self.register_buffer('pe',pe)
+        # A linear layer to project from the input size to an intermediate size
+        self.fc1 = nn.Linear(d_model, d_inner)
 
-    def forward(self, x:torch.tensor)->torch.tensor:
+        # ReLU
+        self.relu = nn.ReLU()
+
+        # A linear layer to project from the intermediate size to the output size (same as the input size)
+        self.fc2 = nn.Linear(d_inner, d_model)
+
+        # Dropout layer
+        self.apply_dropout = nn.Dropout(dropout)
+
+    def forward(self, sequences):
         """
-        The goal of this function
-        is, given an input embedded
-        vector, to add to it the positional 
-        embedding
-        
-        Arguments:
-            -x: torch.tensor: The input vector
-        Returns:
-            -x: torch.tensor: The same
-            tensor once positional encoding was
-            added
+        Forward prop.
+
+        :param sequences: input sequences, a tensor of size (N, pad_length, d_model)
+        :return: transformed output sequences, a tensor of size (N, pad_length, d_model)
         """
+        # Store input for adding later
+        input_to_add = sequences.clone()  # (N, pad_length, d_model)
 
-        x=x*math.sqrt(self.embed_dim)
-        seq_len=x.size(1)
-        x+=torch.autograd.Variable(self.pe[:,:seq_len],requires_grad=False)
-        
-        return x
-    
-class MuliHeadAttention(nn.Module):
-    def __init__(self,embed_dim:int=512,n_heads:int=8):
-        super(MuliHeadAttention,self).__init__()
+        # Apply layer-norm
+        sequences = self.layer_norm(sequences)  # (N, pad_length, d_model)
 
-        self.embed_dim=embed_dim
-        self.n_heads=n_heads 
-        self.single_head_dim=int(self.embed_dim/self.n_heads)
+        # Transform position-wise
+        sequences = self.apply_dropout(self.relu(self.fc1(sequences)))  # (N, pad_length, d_inner)
+        sequences = self.fc2(sequences)  # (N, pad_length, d_model)
 
-        self.query_matrix=nn.Linear(self.single_head_dim,self.single_head_dim,bias=False)
-        self.key_matrix=nn.Linear(self.single_head_dim,self.single_head_dim,bias=False)
-        self.value_matrix=nn.Linear(self.single_head_dim,self.single_head_dim,bias=False)
-        self.out=nn.Linear(self.n_heads*self.single_head_dim,self.embed_dim)
+        # Apply dropout and residual connection
+        sequences = self.apply_dropout(sequences) + input_to_add  # (N, pad_length, d_model)
 
-    def forward(self, key, query, value, mask=None):
-        
-        batch_size=key.size(0)
-        seq_length=key.size(1)
-
-        seq_length_query=query.size(1)
-
-        key=key.view(batch_size,seq_length,self.n_heads,self.single_head_dim)
-        query=query.view(batch_size,seq_length,self.n_heads,self.single_head_dim)
-        value=value.view(batch_size,seq_length,self.n_heads,self.single_head_dim)
-
-        k=self.key_matrix(key)
-        q=self.query_matrix(query)
-        v=self.value_matrix(value)
-
-        q=q.transpose(1, 2)
-        k=k.transpose(1, 2)
-        v=v.transpose(1,2)
-
-        k_adjusted=k.transpose(-1,-2)
-        product=torch.matmul(q,k_adjusted)
-
-        if mask is not None:
-            product=product.masked_fill(mask==0,float(1e-20))
-        
-        product=product/math.sqrt(self.single_head_dim)
-
-        scores=F.softmax(product,dim=-1)
-
-        scores=torch.matmul(scores,v)
-
-        concat=scores.transpose(1, 2).contiguous().view(batch_size,seq_length_query, self.single_head_dim*self.n_heads)
-
-        output=self.out(concat)
+        return sequences
 
 
-        return output
-    
-class TransformerBlock(nn.Module):
-    def __init__(self, embed_dim, expansion_factor=4,n_heads=8):
-        super(TransformerBlock,self).__init__()
+class Encoder(nn.Module):
+    """
+    The Encoder.
+    """
 
-        self.attention=MuliHeadAttention(embed_dim,n_heads)
+    def __init__(self, vocab_size, positional_encoding, d_model, n_heads, d_queries, d_values, d_inner, n_layers,
+                 dropout):
+        """
+        :param vocab_size: size of the (shared) vocabulary
+        :param positional_encoding: positional encodings up to the maximum possible pad-length
+        :param d_model: size of vectors throughout the transformer model, i.e. input and output sizes for the Encoder
+        :param n_heads: number of heads in the multi-head attention
+        :param d_queries: size of query vectors (and also the size of the key vectors) in the multi-head attention
+        :param d_values: size of value vectors in the multi-head attention
+        :param d_inner: an intermediate size in the position-wise FC
+        :param n_layers: number of [multi-head attention + position-wise FC] layers in the Encoder
+        :param dropout: dropout probability
+        """
+        super(Encoder, self).__init__()
 
-        self.norm1=nn.LayerNorm(embed_dim)
-        self.norm2=nn.LayerNorm(embed_dim)
+        self.vocab_size = vocab_size
+        self.positional_encoding = positional_encoding
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.d_queries = d_queries
+        self.d_values = d_values
+        self.d_inner = d_inner
+        self.n_layers = n_layers
+        self.dropout = dropout
 
-        self.feed_forward=nn.Sequential(nn.Linear(embed_dim,expansion_factor*embed_dim),
-                                        nn.ReLU(),
-                                        nn.Linear(expansion_factor*embed_dim,embed_dim)
-                                        )
-        
-        self.dropout1=nn.Dropout(0.2)
-        self.dropout2=nn.Dropout(0.2)
+        # An embedding layer
+        self.embedding = nn.Embedding(vocab_size, d_model)
 
+        # Set the positional encoding tensor to be un-update-able, i.e. gradients aren't computed
+        self.positional_encoding.requires_grad = False
 
-    def forward(self,key, query, value):
-        attention_out=self.attention(key,query,value)
-        attention_residual_out=attention_out+value 
-        norm1_out=self.dropout1(self.norm1(attention_residual_out))
+        # Encoder layers
+        self.encoder_layers = nn.ModuleList([self.make_encoder_layer() for i in range(n_layers)])
 
-        feed_fwd_out=self.feed_forward(norm1_out)
+        # Dropout layer
+        self.apply_dropout = nn.Dropout(dropout)
 
-        feed_fwd_residual_out=feed_fwd_out+norm1_out
-        norm2_out=self.dropout2(self.norm2(feed_fwd_residual_out))
+        # Layer-norm layer
+        self.layer_norm = nn.LayerNorm(d_model)
 
-        return norm2_out
-    
-class TransformerEncoder(nn.Module):
+    def make_encoder_layer(self):
+        """
+        Creates a single layer in the Encoder by combining a multi-head attention sublayer and a position-wise FC sublayer.
+        """
+        # A ModuleList of sublayers
+        encoder_layer = nn.ModuleList([MultiHeadAttention(d_model=self.d_model,
+                                                          n_heads=self.n_heads,
+                                                          d_queries=self.d_queries,
+                                                          d_values=self.d_values,
+                                                          dropout=self.dropout,
+                                                          in_decoder=False),
+                                       PositionWiseFCNetwork(d_model=self.d_model,
+                                                             d_inner=self.d_inner,
+                                                             dropout=self.dropout)])
 
-    def __init__(self,seq_len, vocab_size, embed_dim, num_layers=2, expansion_factor=4, n_heads=8):
-        super(TransformerEncoder,self).__init__()
+        return encoder_layer
 
-        self.embedding_layer=Embedding(vocab_size,embed_dim)
-        self.positional_encoder=PositionalEmbedding(seq_len,embed_dim)
+    def forward(self, encoder_sequences, encoder_sequence_lengths):
+        """
+        Forward prop.
 
-        self.layers=nn.ModuleList([TransformerBlock(embed_dim,expansion_factor,n_heads) for i in range(num_layers)])
+        :param encoder_sequences: the source language sequences, a tensor of size (N, pad_length)
+        :param encoder_sequence_lengths: true lengths of these sequences, a tensor of size (N)
+        :return: encoded source language sequences, a tensor of size (N, pad_length, d_model)
+        """
+        pad_length = encoder_sequences.size(1)  # pad-length of this batch only, varies across batches
 
-    def forward(self, x):
-        embed_out=self.embedding_layer(x)
-        out=self.positional_encoder(embed_out)
-        
-        for layer in self.layers:
-            out=layer(out,out,out)
+        # Sum vocab embeddings and position embeddings
+        encoder_sequences = self.embedding(encoder_sequences) * math.sqrt(self.d_model) + self.positional_encoding[:,
+                                                                                          :pad_length, :].to(
+            device)  # (N, pad_length, d_model)
 
-        return out
-    
-class DecoderBlock(nn.Module):
-    def __init__(self, embed_dim, expansion_factor=4,n_heads=8):
-        super(DecoderBlock,self).__init__()
+        # Dropout
+        encoder_sequences = self.apply_dropout(encoder_sequences)  # (N, pad_length, d_model)
 
-        self.attention=MuliHeadAttention(embed_dim,n_heads=8)
-        self.norm=nn.LayerNorm(embed_dim)
-        self.dropout=nn.Dropout(0.2)
-        self.transformer_block=TransformerBlock(embed_dim,expansion_factor, n_heads)
+        # Encoder layers
+        for encoder_layer in self.encoder_layers:
+            # Sublayers
+            encoder_sequences = encoder_layer[0](query_sequences=encoder_sequences,
+                                                 key_value_sequences=encoder_sequences,
+                                                 key_value_sequence_lengths=encoder_sequence_lengths)  # (N, pad_length, d_model)
+            encoder_sequences = encoder_layer[1](sequences=encoder_sequences)  # (N, pad_length, d_model)
 
-    def forward(self, key, query, x, mask):
-        attention=self.attention(x, x, x, mask=mask)
-        value=self.dropout(self.norm(attention+x))
+        # Apply layer-norm
+        encoder_sequences = self.layer_norm(encoder_sequences)  # (N, pad_length, d_model)
 
-        out=self.transformer_block(key, query, value)
-
-
-        return out
-    
-
-class TransformerDecoder(nn.Module):
-    def __init__(self, target_vocab_size, embed_dim, seq_len, num_layers=2, expansion_factor=4, n_heads=8):
-        super(TransformerDecoder,self).__init__()
-
-        self.word_embedding=nn.Embedding(target_vocab_size,embed_dim)
-        self.position_embedding=PositionalEmbedding(seq_len, embed_dim)
-
-        self.layers=nn.ModuleList([DecoderBlock(embed_dim,expansion_factor=4,n_heads=8) for _ in range(num_layers)])
-
-        self.fc_out=nn.Linear(embed_dim,target_vocab_size)
-        self.dropout=nn.Dropout(0.2)
-
-    def forward(self, x, enc_out, mask):
-        x=self.word_embedding(x)
-        x=self.position_embedding(x)
-        x=self.dropout(x)
-
-        for layer in self.layers:
-            x=layer(enc_out,x, enc_out, mask)
-
-        out=F.softmax(self.fc_out(x))
+        return encoder_sequences
 
 
-        return out 
-    
+class Decoder(nn.Module):
+    """
+    The Decoder.
+    """
+
+    def __init__(self, vocab_size, positional_encoding, d_model, n_heads, d_queries, d_values, d_inner, n_layers,
+                 dropout):
+        """
+        :param vocab_size: size of the (shared) vocabulary
+        :param positional_encoding: positional encodings up to the maximum possible pad-length
+        :param d_model: size of vectors throughout the transformer model, i.e. input and output sizes for the Decoder
+        :param n_heads: number of heads in the multi-head attention
+        :param d_queries: size of query vectors (and also the size of the key vectors) in the multi-head attention
+        :param d_values: size of value vectors in the multi-head attention
+        :param d_inner: an intermediate size in the position-wise FC
+        :param n_layers: number of [multi-head attention + multi-head attention + position-wise FC] layers in the Decoder
+        :param dropout: dropout probability
+        """
+        super(Decoder, self).__init__()
+
+        self.vocab_size = vocab_size
+        self.positional_encoding = positional_encoding
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.d_queries = d_queries
+        self.d_values = d_values
+        self.d_inner = d_inner
+        self.n_layers = n_layers
+        self.dropout = dropout
+
+        # An embedding layer
+        self.embedding = nn.Embedding(vocab_size, d_model)
+
+        # Set the positional encoding tensor to be un-update-able, i.e. gradients aren't computed
+        self.positional_encoding.requires_grad = False
+
+        # Decoder layers
+        self.decoder_layers = nn.ModuleList([self.make_decoder_layer() for i in range(n_layers)])
+
+        # Dropout layer
+        self.apply_dropout = nn.Dropout(dropout)
+
+        # Layer-norm layer
+        self.layer_norm = nn.LayerNorm(d_model)
+
+        # Output linear layer that will compute logits for the vocabulary
+        self.fc = nn.Linear(d_model, vocab_size)
+
+    def make_decoder_layer(self):
+        """
+        Creates a single layer in the Decoder by combining two multi-head attention sublayers and a position-wise FC sublayer.
+        """
+        # A ModuleList of sublayers
+        decoder_layer = nn.ModuleList([MultiHeadAttention(d_model=self.d_model,
+                                                          n_heads=self.n_heads,
+                                                          d_queries=self.d_queries,
+                                                          d_values=self.d_values,
+                                                          dropout=self.dropout,
+                                                          in_decoder=True),
+                                       MultiHeadAttention(d_model=self.d_model,
+                                                          n_heads=self.n_heads,
+                                                          d_queries=self.d_queries,
+                                                          d_values=self.d_values,
+                                                          dropout=self.dropout,
+                                                          in_decoder=True),
+                                       PositionWiseFCNetwork(d_model=self.d_model,
+                                                             d_inner=self.d_inner,
+                                                             dropout=self.dropout)])
+
+        return decoder_layer
+
+    def forward(self, decoder_sequences, decoder_sequence_lengths, encoder_sequences, encoder_sequence_lengths):
+        """
+        Forward prop.
+
+        :param decoder_sequences: the source language sequences, a tensor of size (N, pad_length)
+        :param decoder_sequence_lengths: true lengths of these sequences, a tensor of size (N)
+        :param encoder_sequences: encoded source language sequences, a tensor of size (N, encoder_pad_length, d_model)
+        :param encoder_sequence_lengths: true lengths of these sequences, a tensor of size (N)
+        :return: decoded target language sequences, a tensor of size (N, pad_length, vocab_size)
+        """
+        pad_length = decoder_sequences.size(1)  # pad-length of this batch only, varies across batches
+
+        # Sum vocab embeddings and position embeddings
+        decoder_sequences = self.embedding(decoder_sequences) * math.sqrt(self.d_model) + self.positional_encoding[:,
+                                                                                          :pad_length, :].to(
+            device)  # (N, pad_length, d_model)
+
+        # Dropout
+        decoder_sequences = self.apply_dropout(decoder_sequences)
+
+        # Decoder layers
+        for decoder_layer in self.decoder_layers:
+            # Sublayers
+            decoder_sequences = decoder_layer[0](query_sequences=decoder_sequences,
+                                                 key_value_sequences=decoder_sequences,
+                                                 key_value_sequence_lengths=decoder_sequence_lengths)  # (N, pad_length, d_model)
+            decoder_sequences = decoder_layer[1](query_sequences=decoder_sequences,
+                                                 key_value_sequences=encoder_sequences,
+                                                 key_value_sequence_lengths=encoder_sequence_lengths)  # (N, pad_length, d_model)
+            decoder_sequences = decoder_layer[2](sequences=decoder_sequences)  # (N, pad_length, d_model)
+
+        # Apply layer-norm
+        decoder_sequences = self.layer_norm(decoder_sequences)  # (N, pad_length, d_model)
+
+        # Find logits over vocabulary
+        decoder_sequences = self.fc(decoder_sequences)  # (N, pad_length, vocab_size)
+
+        return decoder_sequences
+
 
 class Transformer(nn.Module):
-    def __init__(self, embed_dim, src_vocab_size, target_vocab_size, seq_length, num_layers=2, expansion_factor=4,n_heads=8):
-        super(Transformer,self).__init__()
+    """
+    The Transformer network.
+    """
 
-        
-        self.target_vocab_size=target_vocab_size
-        self.encoder=TransformerEncoder(seq_length, src_vocab_size, embed_dim, num_layers=num_layers, expansion_factor=expansion_factor, n_heads=n_heads)
-        self.decoder=TransformerDecoder(target_vocab_size, embed_dim, seq_length, num_layers=num_layers,expansion_factor=expansion_factor, n_heads=n_heads)
+    def __init__(self, vocab_size, positional_encoding, d_model=512, n_heads=8, d_queries=64, d_values=64,
+                 d_inner=2048, n_layers=6, dropout=0.1):
+        """
+        :param vocab_size: size of the (shared) vocabulary
+        :param positional_encoding: positional encodings up to the maximum possible pad-length
+        :param d_model: size of vectors throughout the transformer model
+        :param n_heads: number of heads in the multi-head attention
+        :param d_queries: size of query vectors (and also the size of the key vectors) in the multi-head attention
+        :param d_values: size of value vectors in the multi-head attention
+        :param d_inner: an intermediate size in the position-wise FC
+        :param n_layers: number of layers in the Encoder and Decoder
+        :param dropout: dropout probability
+        """
+        super(Transformer, self).__init__()
 
-    def make_trg_mask(self, trg):
-        batch_size, trg_len = trg.shape
+        self.vocab_size = vocab_size
+        self.positional_encoding = positional_encoding
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.d_queries = d_queries
+        self.d_values = d_values
+        self.d_inner = d_inner
+        self.n_layers = n_layers
+        self.dropout = dropout
 
-        trg_mask=torch.tril(torch.ones((trg_len,trg_len))).expand(batch_size, 1, trg_len, trg_len)
-        return trg_mask
-    
-    def decode(self, src, trg):
-        trg_mask=self.make_trg_mask(trg)
-        enc_out=self.encoder(src)
-        out_labels=[]
-        batch_size, seq_len = src.shape[0], src.shape[1]
+        # Encoder
+        self.encoder = Encoder(vocab_size=vocab_size,
+                               positional_encoding=positional_encoding,
+                               d_model=d_model,
+                               n_heads=n_heads,
+                               d_queries=d_queries,
+                               d_values=d_values,
+                               d_inner=d_inner,
+                               n_layers=n_layers,
+                               dropout=dropout)
 
-        out=trg
+        # Decoder
+        self.decoder = Decoder(vocab_size=vocab_size,
+                               positional_encoding=positional_encoding,
+                               d_model=d_model,
+                               n_heads=n_heads,
+                               d_queries=d_queries,
+                               d_values=d_values,
+                               d_inner=d_inner,
+                               n_layers=n_layers,
+                               dropout=dropout)
 
-        for i in range(seq_len):
-            out=self.decoder(out, enc_out, trg_mask)
-            out=out[:,-1,:]
-            out=out.argmax(-1)
-            out_labels.append(out.item())
-            out=torch.unsqueeze(out,axis=0)
-        return out_labels
-    
-    def forward(self, src, trg):
-        trg_mask=self.make_trg_mask(trg)
-        enc_out=self.encoder(src)
-        outputs=self.decoder(trg, enc_out, trg_mask)
-        return outputs
-    
-def fit_transformer(model, max_seq_length, batch_size=32, num_epochs=10, learning_rate=1e-3, device='cpu'):
-    load_data_to_front_database()
-    df_front_database=load_data()
-    df_front_database=df_front_database
-    src_sentences=df_front_database["french"].tolist()
-    trg_sentences=df_front_database["english"].tolist()
+        # Initialize weights
+        self.init_weights()
 
-    english_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')  # Utilisez le tokenizer BERT
-    french_tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-base-french-europeana-cased')
-    # Tokenize, encode, and pad source sentences
-    src_tokens = [french_tokenizer.encode(text, add_special_tokens=True, max_length=max_seq_length, pad_to_max_length=True,truncation=True) for text in src_sentences]
-    src_tensor = torch.tensor(src_tokens, dtype=torch.long)
-    
-    # Tokenize, encode, and pad target sentences
-    trg_tokens = [english_tokenizer.encode(text, add_special_tokens=True, max_length=max_seq_length, pad_to_max_length=True,truncation=True) for text in trg_sentences]
-    trg_tensor = torch.tensor(trg_tokens, dtype=torch.long)
-    
-    src_train, src_test, trg_train, trg_test = train_test_split(src_tensor, trg_tensor, test_size=0.2, random_state=42)
+    def init_weights(self):
+        """
+        Initialize weights in the transformer model.
+        """
+        # Glorot uniform initialization with a gain of 1.
+        for p in self.parameters():
+            # Glorot initialization needs at least two dimensions on the tensor
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p, gain=1.)
 
-    # Create DataLoader
-    train_dataset = TensorDataset(src_train, trg_train)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        # Share weights between the embedding layers and the logit layer
+        nn.init.normal_(self.encoder.embedding.weight, mean=0., std=math.pow(self.d_model, -0.5))
+        self.decoder.embedding.weight = self.encoder.embedding.weight
+        self.decoder.fc.weight = self.decoder.embedding.weight
 
-    test_dataset = TensorDataset(src_test, trg_test)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-        
-    # Set up loss function and optimizer
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    
-    # Move model to the specified device
-    model.to(device)
-    #get_translation()
-    # Training loop
-    for epoch in range(num_epochs):
-        model.train()
-        total_loss = 0.0
-        for index, (src_batch, trg_batch) in enumerate(train_loader):
-            src_batch = src_batch.to(device)
-            trg_batch = trg_batch.to(device)
-            
-            optimizer.zero_grad()
-            
-            # Forward pass
-            outputs = model(src_batch, trg_batch)
-            trg_batch = F.one_hot(trg_batch, num_classes=model.target_vocab_size).float()
-            loss = criterion(outputs.view(-1, model.target_vocab_size), trg_batch.view(-1, model.target_vocab_size))
-            logging.info(f"Loss was computed and is of: {loss:.5f}")
-            # Backpropagation and optimization
-            loss.backward()
-            optimizer.step()
-            
-            total_loss += loss.item()
-        
-        logging.warning(f"Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss:.4f}")
-        logging.info("Saving model...")
-        save_model(model)
-    logging.warning("Training finished.")
+        print("Model initialized.")
 
-def get_translation():
-    model=load_model()
-    model.eval()
-    english_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    french_tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-base-french-europeana-cased')
+    def forward(self, encoder_sequences, decoder_sequences, encoder_sequence_lengths, decoder_sequence_lengths):
+        """
+        Forward propagation.
 
-    # Phrase en français que vous voulez traduire
-    french_sentence = "Bonjour, comment vas-tu ?"
+        :param encoder_sequences: source language sequences, a tensor of size (N, encoder_sequence_pad_length)
+        :param decoder_sequences: target language sequences, a tensor of size (N, decoder_sequence_pad_length)
+        :param encoder_sequence_lengths: true lengths of source language sequences, a tensor of size (N)
+        :param decoder_sequence_lengths: true lengths of target language sequences, a tensor of size (N)
+        :return: decoded target language sequences, a tensor of size (N, decoder_sequence_pad_length, vocab_size)
+        """
+        # Encoder
+        encoder_sequences = self.encoder(encoder_sequences,
+                                         encoder_sequence_lengths)  # (N, encoder_sequence_pad_length, d_model)
 
-    # Tokeniser et encoder la phrase en français
-    src_tokenized = french_tokenizer.encode(french_sentence, add_special_tokens=True, max_length=15, pad_to_max_length=True, truncation=True)
-    src_tensor = torch.tensor(src_tokenized, dtype=torch.long).unsqueeze(0)  # Ajouter une dimension pour le lot (batch)
+        # Decoder
+        decoder_sequences = self.decoder(decoder_sequences, decoder_sequence_lengths, encoder_sequences,
+                                         encoder_sequence_lengths)  # (N, decoder_sequence_pad_length, vocab_size)
 
-    trg_tokenized = english_tokenizer.encode("Hello ! How are you ?", add_special_tokens=True, max_length=15, pad_to_max_length=True, truncation=True)
-    trg_tensor = torch.tensor(trg_tokenized, dtype=torch.long).unsqueeze(0)  # Ajouter une dimension pour le lot (batch)
+        return decoder_sequences
 
-    # Utiliser le modèle pour effectuer la traduction
-    with torch.no_grad():
-        translation_ids = model.decode(src_tensor, trg=trg_tensor)  # trg=None car nous n'avons pas besoin de la cible pour la traduction
 
-    # Décoder les identifiants de tokens en phrases en anglais
-    english_translation = english_tokenizer.decode(translation_ids, skip_special_tokens=True)
+class LabelSmoothedCE(torch.nn.Module):
+    """
+    Cross Entropy loss with label-smoothing as a form of regularization.
 
-    print("Phrase en français:", french_sentence)
-    print("Traduction en anglais:", english_translation)
+    See "Rethinking the Inception Architecture for Computer Vision", https://arxiv.org/abs/1512.00567
+    """
 
-if __name__=="__main__": 
-    model = Transformer(embed_dim=16, src_vocab_size=32000, target_vocab_size=32000, seq_length=64, num_layers=3, expansion_factor=2, n_heads=8)
-    fit_transformer(model, max_seq_length=15, batch_size=50, num_epochs=10, learning_rate=1e-3, device='cpu')
+    def __init__(self, eps=0.1):
+        """
+        :param eps: smoothing co-efficient
+        """
+        super(LabelSmoothedCE, self).__init__()
+        self.eps = eps
+
+    def forward(self, inputs, targets, lengths):
+        """
+        Forward prop.
+
+        :param inputs: decoded target language sequences, a tensor of size (N, pad_length, vocab_size)
+        :param targets: gold target language sequences, a tensor of size (N, pad_length)
+        :param lengths: true lengths of these sequences, to be able to ignore pads, a tensor of size (N)
+        :return: mean label-smoothed cross-entropy loss, a scalar
+        """
+        # Remove pad-positions and flatten
+        inputs, _, _, _ = pack_padded_sequence(input=inputs,
+                                               lengths=lengths,
+                                               batch_first=True,
+                                               enforce_sorted=False)  # (sum(lengths), vocab_size)
+        targets, _, _, _ = pack_padded_sequence(input=targets,
+                                                lengths=lengths,
+                                                batch_first=True,
+                                                enforce_sorted=False)  # (sum(lengths))
+
+        # "Smoothed" one-hot vectors for the gold sequences
+        target_vector = torch.zeros_like(inputs).scatter(dim=1, index=targets.unsqueeze(1),
+                                                         value=1.).to(device)  # (sum(lengths), n_classes), one-hot
+        target_vector = target_vector * (1. - self.eps) + self.eps / target_vector.size(
+            1)  # (sum(lengths), n_classes), "smoothed" one-hot
+
+        # Compute smoothed cross-entropy loss
+        loss = (-1 * target_vector * F.log_softmax(inputs, dim=1)).sum(dim=1)  # (sum(lengths))
+
+        # Compute mean loss
+        loss = torch.mean(loss)
+
+        return loss

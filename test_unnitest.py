@@ -50,7 +50,7 @@ class Test(unittest.TestCase):
         result_images = subprocess.run(['docker', 'images'], capture_output=True, text=True)
         
         
-        load_data_to_front_database()
+        load_data_to_front_database(kaggle_length=50000)
         df_front_database=load_data()
         
         self.assertEqual(result.returncode, 0)
