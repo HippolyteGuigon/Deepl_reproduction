@@ -11,10 +11,11 @@
 .vscode-server/
 .wget-hsts
 .bash_history
-.bash_logout
+.bash_logout 
 .bashrc
 .config/*
 .keras/*
+.local/*
 .profile
 get-pip.py
 model_example.py
