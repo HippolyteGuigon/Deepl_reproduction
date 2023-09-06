@@ -8,11 +8,24 @@ import codecs
 import youtokentome
 import math
 import pandas as pd
+import logging
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
+from Deepl_reproduction.configs.confs import load_conf, clean_params
+from Deepl_reproduction.logs.logs import main
+
+main()
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+main_params = load_conf("configs/main.yml", include=True)
+main_params=clean_params(main_params)
+
+train_size=main_params["train_size"]
 
 def download_data(data_folder):
     """
@@ -89,8 +102,9 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
     english = list()
     files = list()
     
+
     full_data=pd.read_csv(data_folder)
-    X_train=full_data.loc[:np.floor(full_data.shape[0]*0.8),:]
+    X_train=full_data.loc[:np.floor(full_data.shape[0]*train_size),:]
     train_shape=X_train.shape[0]
     X_test=full_data.loc[train_shape:train_shape+(full_data.shape[0]-train_shape)//2:,:]   
     X_val=full_data.loc[train_shape+(full_data.shape[0]-train_shape)//2:,:]   
@@ -108,13 +122,13 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
 
     french_test=X_test["french"].tolist()
     english_test=X_test["english"].tolist()
-    french_test=[sentence.lower() for sentence in french_test]
-    english_test=[sentence.lower() for sentence in english_test]
+    french_test=[str(sentence).lower() for sentence in french_test]
+    english_test=[str(sentence).lower() for sentence in english_test]
 
     french_val=X_val["french"].tolist()
     english_val=X_val["english"].tolist()
-    french_val=[sentence.lower() for sentence in french_val]
-    english_val=[sentence.lower() for sentence in english_val]
+    french_val=[str(sentence).lower() for sentence in french_val]
+    english_val=[str(sentence).lower() for sentence in english_val]
 
     with open(os.path.join(data_folder, "test.fr"), "w", encoding="utf-8") as f:
         f.write("\n".join(french_test))
@@ -135,7 +149,7 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
     with open(os.path.join(data_folder, "train.fren"), "w", encoding="utf-8") as f:
         f.write("\n".join(french + english))
     del english, french  # free some RAM
-
+    
     # Perform BPE
     print("\nLearning BPE...")
     youtokentome.BPE.train(data=os.path.join(data_folder, "train.fren"), vocab_size=37000,

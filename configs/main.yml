@@ -1,3 +1,4 @@
 deepl: !include deepl.yml
 eventregistry: !include eventregistry.yml
 mysql: !include mysql.yml
+model: !include model_params.yml
