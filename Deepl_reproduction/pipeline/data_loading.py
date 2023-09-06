@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from google.cloud import bigquery
 from Deepl_reproduction.configs.confs import load_conf, clean_params
 
-main_params=load_conf("configs/main.yml")
+main_params=load_conf("configs/main.yml", include=True)
 main_params=clean_params(main_params)
 
 kaggle_length=main_params["english_dataset_size"]
