@@ -8,6 +8,11 @@ from sqlalchemy import create_engine
 from google.cloud import bigquery
 from Deepl_reproduction.configs.confs import load_conf, clean_params
 
+main_params=load_conf("configs/main.yml")
+main_params=clean_params(main_params)
+
+kaggle_length=main_params["english_dataset_size"]
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
@@ -35,7 +40,7 @@ db_password = main_params["db_password"]
 db_host = main_params["db_host"]
 db_name = main_params["db_name"]
 
-def get_dataframe_from_bq(table_id: str, project_id: str="deepl-reprodution", dataset_id: str="processed_data", kaggle_length: str=300000)->pd.DataFrame:
+def get_dataframe_from_bq(table_id: str, project_id: str="deepl-reprodution", dataset_id: str="processed_data", kaggle_length: int=kaggle_length)->pd.DataFrame:
     """
     The goal of this function
     is to get all the data available
@@ -75,7 +80,7 @@ def get_dataframe_from_bq(table_id: str, project_id: str="deepl-reprodution", da
 
     return loaded_df
 
-def load_all_data(kaggle_length: str=300000)->pd.DataFrame:
+def load_all_data(kaggle_length: int=kaggle_length)->pd.DataFrame:
     """
     The goal of this function is
     to load all tables in the bigquery
@@ -92,6 +97,7 @@ def load_all_data(kaggle_length: str=300000)->pd.DataFrame:
         containing all data
     """
 
+    logging.info(f"Loading all data on SQL front database with kaggle size: {kaggle_length}")
     full_data=pd.DataFrame(columns=["french", "english"])
 
     client = bigquery.Client()
@@ -102,6 +108,7 @@ def load_all_data(kaggle_length: str=300000)->pd.DataFrame:
     table_id = [row.table_id for row in results]
 
     for id in table_id:
+        logging.info(f"Loading the {id} table")
         if id=="processed_eventregistry":
             df=get_dataframe_from_bq(id)
             full_data=pd.concat([full_data,df[["title_processed", "title"]].rename(columns={"title_processed":"french", "title":"english"})])
@@ -113,10 +120,9 @@ def load_all_data(kaggle_length: str=300000)->pd.DataFrame:
             df=get_dataframe_from_bq(id, kaggle_length=kaggle_length)
             full_data=pd.concat([full_data,df[["french", "english"]]])
     full_data.drop_duplicates(inplace=True)
-
     return full_data
 
-def load_data_to_front_database(kaggle_length: str=300000)->None:
+def load_data_to_front_database(kaggle_length: int=kaggle_length)->None:
     full_data=load_all_data(kaggle_length=kaggle_length)
     engine = create_engine(f'mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}')
     full_data.to_sql('deepl_table', con=engine, if_exists='replace', index=False)

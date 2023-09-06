@@ -129,9 +129,15 @@ def translate(source_sequence, beam_size=4, length_norm_coefficient=0.6):
         # Find the best scoring completed hypothesis
         i = completed_hypotheses_scores.index(max(completed_hypotheses_scores))
         best_hypothesis = all_hypotheses[i]["hypothesis"]
-        best_hypothesis=best_hypothesis.replace("<BOS>","")
         return best_hypothesis, all_hypotheses
 
 
 if __name__ == '__main__':
-    translate("Bonjour, je m'appelle Hippolyte")
+    translation, _ = translate("Bonjour, je m'appelle Hippolyte")
+    print(translation)
+    print("\n")
+    translation, _ = translate("Je suis né en 1997")
+    print(translation)
+    print("\n")
+    translation, _ = translate("J'ai deux frères")
+    print(translation)

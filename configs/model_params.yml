@@ -1,0 +1,19 @@
+train_size: 0.9
+english_dataset_size: 25000000
+tokenization_vocab_size: 50000
+d_model : 512  
+n_heads : 8  
+d_queries : 64  
+d_values : 64  
+d_inner : 2048  
+n_layers : 6  
+dropout : 0.1
+checkpoint : 'Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar'  
+tokens_in_batch : 2000  
+batches_per_step : 25000 
+print_frequency : 20  
+n_steps : 100000  
+warmup_steps : 8000  
+step : 1
+epsilon: 0.000000001
+label_smoothing: 0.1

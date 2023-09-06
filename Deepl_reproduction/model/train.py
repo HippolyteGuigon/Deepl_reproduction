@@ -6,35 +6,39 @@ import os
 from model import Transformer, LabelSmoothedCE
 from dataloader import SequenceLoader
 from utils import *
+from Deepl_reproduction.configs.confs import load_conf, clean_params
+
+main_params=load_conf("configs/main.yml",include=True)
+main_params=clean_params(main_params)
 
 # Data parameters
 data_folder = os.path.join(os.getcwd(),"Deepl_reproduction/model")  # folder with data files
 
 # Model parameters
-d_model = 256  # size of vectors throughout the transformer model
-n_heads = 4  # number of heads in the multi-head attention
-d_queries = 32  # size of query vectors (and also the size of the key vectors) in the multi-head attention
-d_values = 32  # size of value vectors in the multi-head attention
-d_inner = 256  # an intermediate size in the position-wise FC
-n_layers = 3  # number of layers in the Encoder and Decoder
-dropout = 0.1  # dropout probability
+d_model = main_params['d_model']  # size of vectors throughout the transformer model
+n_heads = main_params['n_heads']  # number of heads in the multi-head attention
+d_queries = main_params['d_queries']  # size of query vectors (and also the size of the key vectors) in the multi-head attention
+d_values = main_params['d_values']  # size of value vectors in the multi-head attention
+d_inner = main_params['d_inner']  # an intermediate size in the position-wise FC
+n_layers = main_params['n_layers']  # number of layers in the Encoder and Decoder
+dropout = main_params['dropout']  # dropout probability
 positional_encoding = get_positional_encoding(d_model=d_model,
                                               max_length=160)  # positional encodings up to the maximum possible pad-length
 
 # Learning parameters
-checkpoint = "Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar"  # path to model checkpoint, None if none
-tokens_in_batch = 2000  # batch size in target language tokens
-batches_per_step = 25000 // tokens_in_batch  # perform a training step, i.e. update parameters, once every so many batches
-print_frequency = 20  # print status once every so many steps
-n_steps = 100000  # number of training steps
-warmup_steps = 8000  # number of warmup steps where learning rate is increased linearly; twice the value in the paper, as in the official transformer repo.
-step = 1  # the step number, start from 1 to prevent math error in the next line
+checkpoint = main_params['checkpoint']  # path to model checkpoint, None if none
+tokens_in_batch = main_params['tokens_in_batch']  # batch size in target language tokens
+batches_per_step = main_params['batches_per_step'] // tokens_in_batch  # perform a training step, i.e. update parameters, once every so many batches
+print_frequency = main_params['print_frequency']  # print status once every so many steps
+n_steps = main_params['n_steps']  # number of training steps
+warmup_steps = main_params['warmup_steps']  # number of warmup steps where learning rate is increased linearly; twice the value in the paper, as in the official transformer repo.
+step = main_params['step']  # the step number, start from 1 to prevent math error in the next line
 lr = get_lr(step=step, d_model=d_model,
             warmup_steps=warmup_steps)  # see utils.py for learning rate schedule; twice the schedule in the paper, as in the official transformer repo.
 start_epoch = 0  # start at this epoch
 betas = (0.9, 0.98)  # beta coefficients in the Adam optimizer
-epsilon = 1e-9  # epsilon term in the Adam optimizer
-label_smoothing = 0.1  # label smoothing co-efficient in the Cross Entropy loss
+epsilon = main_params['epsilon'] # epsilon term in the Adam optimizer
+label_smoothing = main_params['label_smoothing']  # label smoothing co-efficient in the Cross Entropy loss
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # CPU isn't really practical here
 cudnn.benchmark = False  # since input tensor size is variable
 
@@ -199,10 +203,6 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
             # If this is the last one or two epochs, save checkpoints at regular intervals for averaging
                 save_checkpoint(epoch, model, optimizer, prefix='step' + "last" + "_")
                 
-                from translate import translate
-                traduction, _ = translate("Bonjour, je m'appelle Hippolyte")
-                print("Traduction of 'Bonjour, je m'appelle Hippolyte:'",traduction)
-
         # Reset data time
         start_data_time = time.time()
 
