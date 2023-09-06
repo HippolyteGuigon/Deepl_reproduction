@@ -35,7 +35,7 @@ class SequenceLoader(object):
         self.source_suffix = source_suffix
         self.target_suffix = target_suffix
         assert split.lower() in {"train", "val",
-                                 "test"}, "'split' must be one of 'train', 'val', 'test'! (case-insensitive)"
+                                 "test", "personnal_test"}, "'split' must be one of 'train', 'val', 'test', 'personnal_test'! (case-insensitive)"
         self.split = split.lower()
 
         # Is this for training?
