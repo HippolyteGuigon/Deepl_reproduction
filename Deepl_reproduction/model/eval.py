@@ -1,41 +1,54 @@
 import torch
 import sacrebleu
+import logging
+import codecs
+import os
+import youtokentome
 from translate import translate
 from tqdm import tqdm
 from dataloader import SequenceLoader
-import youtokentome
-from nltk.translate.bleu_score import sentence_bleu 
-import codecs
-import os
+from nltk.translate.bleu_score import sentence_bleu
+from Deepl_reproduction.logs.logs import main
+
+main()
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
 # Use sacreBLEU in Python or in the command-line?
 # Using in Python will use the test data downloaded in prepare_data.py
 # Using in the command-line will use test data automatically downloaded by sacreBLEU...
 # ...and will print a standard signature which represents the exact BLEU method used! (Important for others to be able to reproduce or compare!)
 sacrebleu_in_python = True
-
+data_folder="Deepl_reproduction/model"
 # Make sure the right model checkpoint is selected in translate.py
 
+logging.info("Choosing evaluation file")
+
+with open(os.path.join(data_folder,"test.fr"), 'r', encoding="utf-8") as f:
+    french=f.read().split("\n")[:101]
+
+with open(os.path.join(data_folder,"test.en"), 'r', encoding="utf-8") as f:
+    english=f.read().split("\n")[:101]
+
+assert len(french)==len(english), "French and English test size must have the same length"
+
+with open(os.path.join(data_folder,"personnal_test.fr"),"w",encoding="utf-8") as f:
+    f.write("\n".join(french))
+
+with open(os.path.join(data_folder,"personnal_test.en"),"w",encoding="utf-8") as f:
+    f.write("\n".join(english))
+
 # Data loader
-test_loader = SequenceLoader(data_folder=os.path.join(os.getcwd(),"Deepl_reproduction/model"),
+test_loader = SequenceLoader(data_folder=os.path.join(os.getcwd(),data_folder),
                              source_suffix="fr",
                              target_suffix="en",
-                             split="test",
+                             split="personnal_test",
                              tokens_in_batch=None)
 test_loader.create_batches()
 
-model=torch.load("Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar")
-
-hypothesis = ["Hello, my name is Hippolyte."]
-
-# Exemple de références humaines (plusieurs références sont possibles)
-references = [["My name is Hippolyte", "My Hippolyte"]]
-
-# Calcul du score BLEU
-bleu_score = sacrebleu.corpus_bleu(hypothesis, references)
-
-# Affichage du score BLEU
-print(f"BLEU Score: {bleu_score.score}")
+logging.info("Begginning evaluation")
 
 # Evaluate
 with torch.no_grad():
@@ -48,6 +61,9 @@ with torch.no_grad():
                                     beam_size=4,
                                     length_norm_coefficient=0.6)[0])
             references.extend(test_loader.bpe_model.decode(target_sequence.tolist()))
+
+            hypotheses=[sentence.replace("<BOS>","").replace("<EOS>","").strip() for sentence in hypotheses]
+            references=[sentence.replace("<BOS>","").replace("<EOS>","").strip() for sentence in references]
         except RuntimeError:
             continue
     if sacrebleu_in_python:

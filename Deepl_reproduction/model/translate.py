@@ -134,10 +134,10 @@ def translate(source_sequence, beam_size=4, length_norm_coefficient=0.6):
 
 if __name__ == '__main__':
     translation, _ = translate("Bonjour, je m'appelle Hippolyte")
-    print(translation)
+    print("Bonjour, je m'appelle Hippolyte"," ",translation)
     print("\n")
     translation, _ = translate("Je suis né en 1997")
-    print(translation)
+    print("Je suis né en 1997"," ",translation)
     print("\n")
     translation, _ = translate("J'ai deux frères")
-    print(translation)
+    print("J'ai deux frères", " ",translation)
