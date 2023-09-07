@@ -74,4 +74,5 @@ def load_model(load_gcp: bool=True, load_best=True, **kwargs)->torch:
         return model
     
 if __name__=="__main__":
-    load_model()
+    model=load_model()
+    print(type(model))
