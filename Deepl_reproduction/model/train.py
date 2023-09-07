@@ -7,6 +7,16 @@ from model import Transformer, LabelSmoothedCE
 from dataloader import SequenceLoader
 from utils import *
 from Deepl_reproduction.configs.confs import load_conf, clean_params
+from Deepl_reproduction.logs.logs import main
+from google.cloud import storage
+
+client = storage.Client.from_service_account_json('deepl_api_key.json', project='deepl-reprodution')
+
+main()
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
 main_params=load_conf("configs/main.yml",include=True)
 main_params=clean_params(main_params)
@@ -83,7 +93,6 @@ def main():
         print('\nLoaded checkpoint from epoch %d.\n' % start_epoch)
         model = checkpoint['model']
         optimizer = checkpoint['optimizer']
-
     # Loss function
     criterion = LabelSmoothedCE(eps=label_smoothing)
 
@@ -139,6 +148,18 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
     start_data_time = time.time()
     start_step_time = time.time()
 
+    bucket = client.get_bucket('english_deepl_bucket')
+    blobs = bucket.list_blobs()
+    file_names = [blob.name for blob in blobs]
+
+    if len(file_names)==0:
+        min_loss_gcp=5
+    else:
+        loss_gcp=[name.replace('deepl_english_model_loss_','').replace('.pth.tar','') for name in file_names]
+        loss_gcp=[float(loss.replace("_",".")) for loss in loss_gcp]
+        min_loss_gcp=min(loss_gcp)
+        logging.warning(f"The smallest lost found in the bucket is: {min_loss_gcp} and will be taken as reference")
+
     # Batches
     for i, (source_sequences, target_sequences, source_sequence_lengths, target_sequence_lengths) in enumerate(
             train_loader):
@@ -185,7 +206,7 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
 
             # Print status
             if step % print_frequency == 0:
-                print('Epoch {0}/{1}-----'
+                logging.info('Epoch {0}/{1}-----'
                       'Batch {2}/{3}-----'
                       'Step {4}/{5}-----'
                       'Data Time {data_time.val:.3f} ({data_time.avg:.3f})-----'
@@ -202,6 +223,16 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
 
             # If this is the last one or two epochs, save checkpoints at regular intervals for averaging
                 save_checkpoint(epoch, model, optimizer, prefix='step' + "last" + "_")
+
+                if losses.val<min_loss_gcp:
+                    logging.warning(f"A new record of {min_loss_gcp:.2f} was hit for the model !")
+                    min_loss_gcp=losses.val
+                    bucket = client.get_bucket('english_deepl_bucket')
+                    name_model='deepl_english_model_loss_'+str(min_loss_gcp).replace(".","_")+'.pth.tar'
+                    blob = bucket.blob(name_model)
+                    blob.upload_from_filename('Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar')
+                    logging.warning(f"Model was successfully saved une the name {name_model} in the bucket english_deepl_bucket")
+
                 
         # Reset data time
         start_data_time = time.time()

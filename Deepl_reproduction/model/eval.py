@@ -61,6 +61,9 @@ with torch.no_grad():
                                     beam_size=4,
                                     length_norm_coefficient=0.6)[0])
             references.extend(test_loader.bpe_model.decode(target_sequence.tolist()))
+
+            hypotheses=[sentence.replace("<BOS>","").replace("<EOS>","").strip() for sentence in hypotheses]
+            references=[sentence.replace("<BOS>","").replace("<EOS>","").strip() for sentence in references]
         except RuntimeError:
             continue
     if sacrebleu_in_python:
