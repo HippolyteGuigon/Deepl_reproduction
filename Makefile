@@ -1,4 +1,4 @@
-MYSQL_ROOT_PASSWORD:=Bisma4And7 
+MYSQL_ROOT_PASSWORD:=Bisma4And7
 
 activate_environment:
 	mamba activate deepl_reproduction_env
@@ -17,4 +17,4 @@ launch_front_database_docker_image:
 	docker run -d -p 3306:3306 --name local-mysql-container front_database_image
 
 launch_streamlit:
-	streamlit run app.py --server.fileWatcherType none
+	streamlit run app.py
