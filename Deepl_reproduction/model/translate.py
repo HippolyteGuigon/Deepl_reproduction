@@ -1,17 +1,32 @@
 import torch
+import os
+import glob
 import torch.nn.functional as F
 import youtokentome
 import math
+import sys
+from Deepl_reproduction.model.model import Transformer
 
 # Device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # BPE Model
 bpe_model = youtokentome.BPE(model="Deepl_reproduction/model/bpe.model")
+sys.path.insert(0, "./")
 
 # Transformer model
-checkpoint = torch.load("Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar")
-model = checkpoint['model'].to(device)
+
+if not os.path.exists(
+    "Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar"
+):
+    model_path = glob.glob("Deepl_reproduction/model/*.pth.tar")[0]
+    checkpoint = torch.load(model_path)
+    model = checkpoint["model"].to(device)
+else:
+    checkpoint = torch.load(
+        "Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar"
+    )
+    model = checkpoint["model"].to(device)
 model.eval()
 
 
@@ -36,22 +51,32 @@ def translate(source_sequence, beam_size=4, length_norm_coefficient=0.6):
 
         # If the source sequence is a string, convert to a tensor of IDs
         if isinstance(source_sequence, str):
-            encoder_sequences = bpe_model.encode(source_sequence,
-                                                 output_type=youtokentome.OutputType.ID,
-                                                 bos=False,
-                                                 eos=False)
-            encoder_sequences = torch.LongTensor(encoder_sequences).unsqueeze(0)  # (1, source_sequence_length)
+            encoder_sequences = bpe_model.encode(
+                source_sequence,
+                output_type=youtokentome.OutputType.ID,
+                bos=False,
+                eos=False,
+            )
+            encoder_sequences = torch.LongTensor(encoder_sequences).unsqueeze(
+                0
+            )  # (1, source_sequence_length)
         else:
             encoder_sequences = source_sequence
         encoder_sequences = encoder_sequences.to(device)  # (1, source_sequence_length)
-        encoder_sequence_lengths = torch.LongTensor([encoder_sequences.size(1)]).to(device)  # (1)
+        encoder_sequence_lengths = torch.LongTensor([encoder_sequences.size(1)]).to(
+            device
+        )  # (1)
 
         # Encode
-        encoder_sequences = model.encoder(encoder_sequences=encoder_sequences,
-                                          encoder_sequence_lengths=encoder_sequence_lengths)  # (1, source_sequence_length, d_model)
+        encoder_sequences = model.encoder(
+            encoder_sequences=encoder_sequences,
+            encoder_sequence_lengths=encoder_sequence_lengths,
+        )  # (1, source_sequence_length, d_model)
 
         # Our hypothesis to begin with is just <BOS>
-        hypotheses = torch.LongTensor([[bpe_model.subword_to_id('<BOS>')]]).to(device)  # (1, 1)
+        hypotheses = torch.LongTensor([[bpe_model.subword_to_id("<BOS>")]]).to(
+            device
+        )  # (1, 1)
         hypotheses_lengths = torch.LongTensor([hypotheses.size(1)]).to(device)  # (1)
 
         # Tensor to store hypotheses' scores; now it's just 0
@@ -68,11 +93,12 @@ def translate(source_sequence, beam_size=4, length_norm_coefficient=0.6):
         # At this point, s is 1, because we only have 1 hypothesis to work with, i.e. "<BOS>"
         while True:
             s = hypotheses.size(0)
-            decoder_sequences = model.decoder(decoder_sequences=hypotheses,
-                                              decoder_sequence_lengths=hypotheses_lengths,
-                                              encoder_sequences=encoder_sequences.repeat(s, 1, 1),
-                                              encoder_sequence_lengths=encoder_sequence_lengths.repeat(
-                                                  s))  # (s, step, vocab_size)
+            decoder_sequences = model.decoder(
+                decoder_sequences=hypotheses,
+                decoder_sequence_lengths=hypotheses_lengths,
+                encoder_sequences=encoder_sequences.repeat(s, 1, 1),
+                encoder_sequence_lengths=encoder_sequence_lengths.repeat(s),
+            )  # (s, step, vocab_size)
 
             # Scores at this step
             scores = decoder_sequences[:, -1, :]  # (s, vocab_size)
@@ -82,25 +108,32 @@ def translate(source_sequence, beam_size=4, length_norm_coefficient=0.6):
             scores = hypotheses_scores.unsqueeze(1) + scores  # (s, vocab_size)
 
             # Unroll and find top k scores, and their unrolled indices
-            top_k_hypotheses_scores, unrolled_indices = scores.view(-1).topk(k, 0, True, True)  # (k)
+            top_k_hypotheses_scores, unrolled_indices = scores.view(-1).topk(
+                k, 0, True, True
+            )  # (k)
 
             # Convert unrolled indices to actual indices of the scores tensor which yielded the best scores
             prev_word_indices = unrolled_indices // vocab_size  # (k)
             next_word_indices = unrolled_indices % vocab_size  # (k)
 
             # Construct the the new top k hypotheses from these indices
-            top_k_hypotheses = torch.cat([hypotheses[prev_word_indices], next_word_indices.unsqueeze(1)],
-                                         dim=1)  # (k, step + 1)
+            top_k_hypotheses = torch.cat(
+                [hypotheses[prev_word_indices], next_word_indices.unsqueeze(1)], dim=1
+            )  # (k, step + 1)
 
             # Which of these new hypotheses are complete (reached <EOS>)?
-            complete = next_word_indices == bpe_model.subword_to_id('<EOS>')  # (k), bool
+            complete = next_word_indices == bpe_model.subword_to_id(
+                "<EOS>"
+            )  # (k), bool
 
             # Set aside completed hypotheses and their scores normalized by their lengths
             # For the length normalization formula, see
             # "Google’s Neural Machine Translation System: Bridging the Gap between Human and Machine Translation"
             completed_hypotheses.extend(top_k_hypotheses[complete].tolist())
             norm = math.pow(((5 + step) / (5 + 1)), length_norm_coefficient)
-            completed_hypotheses_scores.extend((top_k_hypotheses_scores[complete] / norm).tolist())
+            completed_hypotheses_scores.extend(
+                (top_k_hypotheses_scores[complete] / norm).tolist()
+            )
 
             # Stop if we have completed enough hypotheses
             if len(completed_hypotheses) >= n_completed_hypotheses:
@@ -109,7 +142,11 @@ def translate(source_sequence, beam_size=4, length_norm_coefficient=0.6):
             # Else, continue with incomplete hypotheses
             hypotheses = top_k_hypotheses[~complete]  # (s, step + 1)
             hypotheses_scores = top_k_hypotheses_scores[~complete]  # (s)
-            hypotheses_lengths = torch.LongTensor(hypotheses.size(0) * [hypotheses.size(1)]).to(device)  # (s)
+            hypotheses_lengths = torch.LongTensor(
+                hypotheses.size(0) * [hypotheses.size(1)]
+            ).to(
+                device
+            )  # (s)
 
             # Stop if things have been going on for too long
             if step > 100:
@@ -124,7 +161,9 @@ def translate(source_sequence, beam_size=4, length_norm_coefficient=0.6):
         # Decode the hypotheses
         all_hypotheses = list()
         for i, h in enumerate(bpe_model.decode(completed_hypotheses)):
-            all_hypotheses.append({"hypothesis": h, "score": completed_hypotheses_scores[i]})
+            all_hypotheses.append(
+                {"hypothesis": h, "score": completed_hypotheses_scores[i]}
+            )
 
         # Find the best scoring completed hypothesis
         i = completed_hypotheses_scores.index(max(completed_hypotheses_scores))
@@ -132,38 +171,38 @@ def translate(source_sequence, beam_size=4, length_norm_coefficient=0.6):
         return best_hypothesis, all_hypotheses
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     translation, _ = translate("le chat est en train de dormir sur le canapé")
-    translation=translation.replace("<BOS>","").replace("<EOS>","").strip()
-    translation=translation.capitalize()
-    print("le chat est en train de dormir sur le canapé"," ",translation)
+    translation = translation.replace("<BOS>", "").replace("<EOS>", "").strip()
+    translation = translation.capitalize()
+    print("le chat est en train de dormir sur le canapé", " ", translation)
     print("\n")
     translation, _ = translate("la voiture est rouge")
-    translation=translation.replace("<BOS>","").replace("<EOS>","").strip()
-    translation=translation.capitalize()
-    print("la voiture est rouge"," ",translation)
+    translation = translation.replace("<BOS>", "").replace("<EOS>", "").strip()
+    translation = translation.capitalize()
+    print("la voiture est rouge", " ", translation)
     print("\n")
     translation, _ = translate("j'habite à paris")
-    translation=translation.replace("<BOS>","").replace("<EOS>","").strip()
-    translation=translation.capitalize()
-    print("j'habite à paris"," ",translation)
+    translation = translation.replace("<BOS>", "").replace("<EOS>", "").strip()
+    translation = translation.capitalize()
+    print("j'habite à paris", " ", translation)
     print("\n")
     translation, _ = translate("bonjour, je m'appelle hippolyte")
-    translation=translation.replace("<BOS>","").replace("<EOS>","").strip()
-    translation=translation.capitalize()
-    print("bonjour, je m'appelle Hippolyte"," ",translation)
+    translation = translation.replace("<BOS>", "").replace("<EOS>", "").strip()
+    translation = translation.capitalize()
+    print("bonjour, je m'appelle Hippolyte", " ", translation)
     print("\n")
     translation, _ = translate("bonjour, je suis hippolyte")
-    translation=translation.replace("<BOS>","").replace("<EOS>","").strip()
-    translation=translation.capitalize()
-    print("bonjour, je suis Hippolyte"," ",translation)
+    translation = translation.replace("<BOS>", "").replace("<EOS>", "").strip()
+    translation = translation.capitalize()
+    print("bonjour, je suis Hippolyte", " ", translation)
     print("\n")
     translation, _ = translate("je suis né en 1997")
-    translation=translation.replace("<BOS>","").replace("<EOS>","").strip()
-    translation=translation.capitalize()
-    print("je suis né en 1997"," ",translation)
+    translation = translation.replace("<BOS>", "").replace("<EOS>", "").strip()
+    translation = translation.capitalize()
+    print("je suis né en 1997", " ", translation)
     print("\n")
     translation, _ = translate("j'ai deux frères")
-    translation=translation.replace("<BOS>","").replace("<EOS>","").strip()
-    translation=translation.capitalize()
-    print("j'ai deux frères", " ",translation)
+    translation = translation.replace("<BOS>", "").replace("<EOS>", "").strip()
+    translation = translation.capitalize()
+    print("j'ai deux frères", " ", translation)
