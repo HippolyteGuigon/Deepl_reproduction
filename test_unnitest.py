@@ -1,7 +1,6 @@
 import unittest
 import os
 import subprocess
-import random
 import sys
 from google.cloud import storage
 from Deepl_reproduction.ETL.transform.traduction import translate_text
@@ -122,11 +121,23 @@ class Test(unittest.TestCase):
         bucket = client.get_bucket("english_deepl_bucket")
         blobs = bucket.list_blobs()
         file_names = [blob.name for blob in blobs]
-        random_model = random.choice(file_names)
+        file_names = [blob.name for blob in blobs if blob.name != "bpe.model"]
+        loss_gcp = [
+            name.replace("deepl_english_model_loss_", "").replace(".pth.tar", "")
+            for name in file_names
+        ]
+        loss_gcp = [float(loss.replace("_", ".")) for loss in loss_gcp]
+        min_loss_gcp = min(loss_gcp)
+        best_model_name = [
+            name for name in file_names if str(min_loss_gcp).replace(".", "_") in name
+        ][0]
+        best_model_path = os.path.join(
+            os.getcwd(), "Deepl_reproduction/model", best_model_name
+        )
         best_model = load_model()
 
         self.assertTrue(
-            os.path.exists(os.path.join("Deepl_reproduction/model", random_model))
+            os.path.exists(os.path.join("Deepl_reproduction/model", best_model_path))
         )
         self.assertIsInstance(best_model, dict)
 

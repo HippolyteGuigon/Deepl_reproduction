@@ -1,0 +1,14 @@
+# Utilisez une image Python de base
+FROM python:latest
+
+# Définissez le répertoire de travail à /app
+WORKDIR /app
+
+# Copiez le fichier Python dans le conteneur
+COPY . /app/
+
+# Installez les dépendances Python si nécessaire (requirements.txt)
+RUN pip install -r requirements.txt
+
+# Exécutez le fichier Python lorsque le conteneur est démarré
+CMD ["python", "app.py"]
