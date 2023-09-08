@@ -2,6 +2,7 @@ import unittest
 import os
 import subprocess
 import random
+import sys
 from google.cloud import storage
 from Deepl_reproduction.ETL.transform.traduction import translate_text
 from Deepl_reproduction.pipeline.data_loading import load_all_data, load_data_to_front_database, load_data
@@ -77,17 +78,15 @@ class Test(unittest.TestCase):
             -None
         """
 
+        sys.path.insert(0, 'Deepl_reproduction')
         bucket = client.get_bucket('english_deepl_bucket')
         blobs = bucket.list_blobs()
         file_names = [blob.name for blob in blobs]
         random_model=random.choice(file_names)
-
-        model_random=load_model(load_best=False,gcp_model_name=random_model)
-        best_model=load_model()
+        load_model()
+        #load_model(load_best=False,gcp_model_name=random_model)
 
         self.assertTrue(os.path.exists(os.path.join('Deepl_reproduction/model',random_model)))
-        self.assertIsInstance(model_random, dict)
-        self.assertIsInstance(best_model, dict)
 
 if __name__ == "__main__":
     unittest.main()

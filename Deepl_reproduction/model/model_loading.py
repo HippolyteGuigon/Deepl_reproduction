@@ -37,13 +37,12 @@ def load_model(load_gcp: bool=True, load_best=True, **kwargs)->torch:
 
     save_path='Deepl_reproduction/model'
 
-
     if load_gcp:
         bucket = client.get_bucket('english_deepl_bucket')
 
         if load_best:
             blobs = bucket.list_blobs()
-            file_names = [blob.name for blob in blobs]
+            file_names = [blob.name for blob in blobs if blob.name!="bpe.model"]
             loss_gcp=[name.replace('deepl_english_model_loss_','').replace('.pth.tar','') for name in file_names]
             loss_gcp=[float(loss.replace("_",".")) for loss in loss_gcp]
             min_loss_gcp=min(loss_gcp)
@@ -74,5 +73,5 @@ def load_model(load_gcp: bool=True, load_best=True, **kwargs)->torch:
         return model
     
 if __name__=="__main__":
-    model=load_model()
+    model=load_model(load_best=False,gcp_model_name="deepl_english_model_loss_3_181002616882324.pth.tar")
 
