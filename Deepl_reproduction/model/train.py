@@ -150,7 +150,7 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
 
     bucket = client.get_bucket('english_deepl_bucket')
     blobs = bucket.list_blobs()
-    file_names = [blob.name for blob in blobs]
+    file_names = [blob.name for blob in blobs if blob.name!="bpe.model"]
 
     if len(file_names)==0:
         min_loss_gcp=5

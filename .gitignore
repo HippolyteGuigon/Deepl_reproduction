@@ -13,6 +13,7 @@
 .bash_history
 .bash_logout 
 .bashrc
+.vscode/
 .config/*
 .keras/*
 .local/*

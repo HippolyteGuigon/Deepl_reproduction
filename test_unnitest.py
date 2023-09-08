@@ -1,8 +1,14 @@
 import unittest
 import os
 import subprocess
+import random
+import sys
+from google.cloud import storage
 from Deepl_reproduction.ETL.transform.traduction import translate_text
 from Deepl_reproduction.pipeline.data_loading import load_all_data, load_data_to_front_database, load_data
+from Deepl_reproduction.model.model_loading import load_model
+
+client = storage.Client.from_service_account_json('deepl_api_key.json', project='deepl-reprodution')
 
 class Test(unittest.TestCase):
     """
@@ -60,6 +66,27 @@ class Test(unittest.TestCase):
         self.assertIn("english",df_front_database.columns)
         self.assertEqual(2, df_front_database.shape[1])
 
+    def test_check_model_loading(self)->None:
+        """
+        The goal of this function is to 
+        check the ability to load a model
+        from google cloud storage
+
+        Arguments:
+            -None
+        Returns:
+            -None
+        """
+
+        sys.path.insert(0, 'Deepl_reproduction')
+        bucket = client.get_bucket('english_deepl_bucket')
+        blobs = bucket.list_blobs()
+        file_names = [blob.name for blob in blobs]
+        random_model=random.choice(file_names)
+        load_model()
+        #load_model(load_best=False,gcp_model_name=random_model)
+
+        self.assertTrue(os.path.exists(os.path.join('Deepl_reproduction/model',random_model)))
 
 if __name__ == "__main__":
     unittest.main()

@@ -4,6 +4,7 @@ import logging
 import codecs
 import os
 import youtokentome
+import numpy as np
 from translate import translate
 from tqdm import tqdm
 from dataloader import SequenceLoader
@@ -27,12 +28,16 @@ data_folder="Deepl_reproduction/model"
 logging.info("Choosing evaluation file")
 
 with open(os.path.join(data_folder,"test.fr"), 'r', encoding="utf-8") as f:
-    french=f.read().split("\n")[:101]
+    french=f.read().split("\n")
 
 with open(os.path.join(data_folder,"test.en"), 'r', encoding="utf-8") as f:
-    english=f.read().split("\n")[:101]
+    english=f.read().split("\n")
 
 assert len(french)==len(english), "French and English test size must have the same length"
+
+random_indexes=np.unique(np.random.randint(0,len(french),size=1000))
+
+french, english = [french[i] for i in random_indexes], [english[i] for i in random_indexes]
 
 with open(os.path.join(data_folder,"personnal_test.fr"),"w",encoding="utf-8") as f:
     f.write("\n".join(french))
@@ -62,8 +67,8 @@ with torch.no_grad():
                                     length_norm_coefficient=0.6)[0])
             references.extend(test_loader.bpe_model.decode(target_sequence.tolist()))
 
-            hypotheses=[sentence.replace("<BOS>","").replace("<EOS>","").strip() for sentence in hypotheses]
-            references=[sentence.replace("<BOS>","").replace("<EOS>","").strip() for sentence in references]
+            hypotheses=[sentence.replace("<BOS>","").replace("<EOS>","").strip().lower() for sentence in hypotheses]
+            references=[sentence.replace("<BOS>","").replace("<EOS>","").strip().lower() for sentence in references]
         except RuntimeError:
             continue
     if sacrebleu_in_python:

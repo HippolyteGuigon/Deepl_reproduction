@@ -37,18 +37,17 @@ def load_model(load_gcp: bool=True, load_best=True, **kwargs)->torch:
 
     save_path='Deepl_reproduction/model'
 
-
     if load_gcp:
         bucket = client.get_bucket('english_deepl_bucket')
 
         if load_best:
             blobs = bucket.list_blobs()
-            file_names = [blob.name for blob in blobs]
+            file_names = [blob.name for blob in blobs if blob.name!="bpe.model"]
             loss_gcp=[name.replace('deepl_english_model_loss_','').replace('.pth.tar','') for name in file_names]
             loss_gcp=[float(loss.replace("_",".")) for loss in loss_gcp]
             min_loss_gcp=min(loss_gcp)
             best_model_name=[name for name in file_names if str(min_loss_gcp).replace(".", "_") in name][0]
-            final_save_path=os.path.join(save_path,best_model_name)
+            final_save_path=os.path.join(os.getcwd(),save_path,best_model_name)
             logging.info(f"Downloading {best_model_name} model...")
             blob = bucket.blob(best_model_name)
             blob.download_to_filename(final_save_path)
@@ -61,7 +60,7 @@ def load_model(load_gcp: bool=True, load_best=True, **kwargs)->torch:
                 raise ValueError("If you want to load another model than the best, \
                                 please enter the name of the model you want under the\
                                 'gcp_model_name' argument")
-            final_save_path=os.path.join(save_path,kwargs['gcp_model_name'])
+            final_save_path=os.path.join(os.getcwd(),save_path,kwargs['gcp_model_name'])
             logging.info(f"Downloading {kwargs['gcp_model_name']} model...")
             blob = bucket.blob(kwargs['gcp_model_name'])
             blob.download_to_filename(final_save_path)
@@ -74,4 +73,5 @@ def load_model(load_gcp: bool=True, load_best=True, **kwargs)->torch:
         return model
     
 if __name__=="__main__":
-    load_model()
+    model=load_model(load_best=False,gcp_model_name="deepl_english_model_loss_3_181002616882324.pth.tar")
+

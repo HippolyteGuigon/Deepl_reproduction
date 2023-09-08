@@ -3,9 +3,14 @@ The goal of this repository is to create a replica of the Deepl translator with 
 
 ## Build Status
 
-For the moment, the project has just begun 
+For the moment, the main architecture relying on Google Cloud Platform with databases, cloud functions and Virtual Machine is finished. Futhermore, the pipeline starting from GCP and training the model is also over.
 
-Throughout its construction, if you see any improvements that could be made in the code, do not hesitate to reach out at
+The first version of the model traducing from French to English is over and can be used. 
+
+The next steps are to keep improving this model as well as launching new trainings for a translation from French to Japanese. 
+Also, a user-friendly interface using streamlit will be developped. Finally, a text-to-speech model will be implemented for nicer translations.
+
+Throughout the project, if you see any improvements that could be made in the code, do not hesitate to reach out at
 Hippolyte.guigon@hec.edu. I will b delighted to get some insights !
 
 ## Code style
