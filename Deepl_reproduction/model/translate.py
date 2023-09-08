@@ -1,4 +1,6 @@
 import torch
+import os
+import glob
 import torch.nn.functional as F
 import youtokentome
 import math
@@ -10,10 +12,15 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 bpe_model = youtokentome.BPE(model="Deepl_reproduction/model/bpe.model")
 
 # Transformer model
-checkpoint = torch.load("Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar")
-model = checkpoint['model'].to(device)
-model.eval()
 
+if not os.path.exists('Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar'):
+    model_path=glob.glob('Deepl_reproduction/model/*.pth.tar')[0]
+    checkpoint = torch.load(model_path)
+    model = checkpoint['model'].to(device)
+else:
+    checkpoint = torch.load("Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar")
+    model = checkpoint['model'].to(device)
+model.eval()
 
 def translate(source_sequence, beam_size=4, length_norm_coefficient=0.6):
     """
