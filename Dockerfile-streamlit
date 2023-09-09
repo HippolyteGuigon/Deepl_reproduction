@@ -1,6 +1,7 @@
 # Utilisez une image Python de base
 FROM python:latest
 
+EXPOSE 8501
 # Définissez le répertoire de travail à /app
 WORKDIR /app
 
