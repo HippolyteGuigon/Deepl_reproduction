@@ -11,4 +11,4 @@ COPY . /app/
 RUN pip install -r requirements.txt
 
 # Exécutez le fichier Python lorsque le conteneur est démarré
-CMD ["python", "app.py"]
+CMD ["streamlit", "run", "app.py"]
