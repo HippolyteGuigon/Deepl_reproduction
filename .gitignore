@@ -12,7 +12,7 @@
 japanese_data/
 .wget-hsts
 .bash_history
-.bash_logout 
+.bash_logout
 .bashrc
 .vscode/
 .config/*
