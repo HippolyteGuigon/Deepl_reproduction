@@ -9,6 +9,7 @@
 .local/
 .ssh/
 .vscode-server/
+japanese_data/
 .wget-hsts
 .bash_history
 .bash_logout 
