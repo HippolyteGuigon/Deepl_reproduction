@@ -32,4 +32,4 @@ The all project was coded under PEP-8 (https://peps.python.org/pep-0008/) and fl
 
 ## How to use ?
 
-After having dealt with the installation step, just run ``streamlit run app.py``` then select the language you want to translate to and enjoy the result !
+After having dealt with the installation step, just run ```streamlit run app.py``` then select the language you want to translate to and enjoy the result !
