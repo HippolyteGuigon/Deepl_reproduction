@@ -5,7 +5,7 @@ The goal of this repository is to create a replica of the Deepl translator with 
 
 For the moment, the main architecture relying on Google Cloud Platform with databases, cloud functions and Virtual Machine is finished. Futhermore, the pipeline starting from GCP and training the model is also over.
 
-The first version of the model traducing from French to English is over and can be used. 
+The first version of the model traducing from French to English is over and can be used with a streamlit application.
 
 The next steps are to keep improving this model as well as launching new trainings for a translation from French to Japanese. 
 Also, a user-friendly interface using streamlit will be developped. Finally, a text-to-speech model will be implemented for nicer translations.
@@ -31,3 +31,5 @@ The all project was coded under PEP-8 (https://peps.python.org/pep-0008/) and fl
 
 
 ## How to use ?
+
+After having dealt with the installation step, just run ``streamlit run app.py``` then select the language you want to translate to and enjoy the result ! 
