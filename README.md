@@ -7,7 +7,7 @@ For the moment, the main architecture relying on Google Cloud Platform with data
 
 The first version of the model traducing from French to English is over and can be used with a streamlit application.
 
-The next steps are to keep improving this model as well as launching new trainings for a translation from French to Japanese. 
+The next steps are to keep improving this model as well as launching new trainings for a translation from French to Japanese.
 Also, a user-friendly interface using streamlit will be developped. Finally, a text-to-speech model will be implemented for nicer translations.
 
 Throughout the project, if you see any improvements that could be made in the code, do not hesitate to reach out at
@@ -32,4 +32,4 @@ The all project was coded under PEP-8 (https://peps.python.org/pep-0008/) and fl
 
 ## How to use ?
 
-After having dealt with the installation step, just run ``streamlit run app.py``` then select the language you want to translate to and enjoy the result ! 
+After having dealt with the installation step, just run ``streamlit run app.py``` then select the language you want to translate to and enjoy the result !
