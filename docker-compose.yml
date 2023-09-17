@@ -1,0 +1,23 @@
+version: '3'
+services:
+  data-fetcher:
+    build:
+      context: ./Dockerfile-model-loading 
+    volumes:
+      - ./data:/app/model_bucket 
+    networks:
+      - mynetwork
+    command: sh -c "sleep 10 && streamlit run /app/app.py" # Laissez le conteneur actif pendant un certain temps pour permettre le téléchargement
+
+  streamlit-app:
+    build:
+      context: ./Dockerfile-streamlit 
+    ports:
+      - "8501:8501" # Mappez le port du conteneur Streamlit sur le port de l'hôte
+    depends_on:
+      - data-fetcher # Assurez-vous que le service de téléchargement de données est prêt avant de démarrer l'application Streamlit
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork: # Définissez un réseau personnalisé pour que les services puissent communiquer entre eux
