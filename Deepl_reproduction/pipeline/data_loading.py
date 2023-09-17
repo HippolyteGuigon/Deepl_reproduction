@@ -104,8 +104,8 @@ def load_all_data(
 
     assert language in [
         "en",
-        "ru",
-    ], "The language tables to load in the front database must be en or ru"
+        "ja",
+    ], "The language tables to load in the front database must be en or ja"
 
     logging.info(
         f"Loading all data on SQL front database with kaggle\
@@ -161,8 +161,8 @@ def load_all_data(
             else:
                 continue
 
-    elif language == "ru":
-        full_data = pd.DataFrame(columns=["french", "russian"])
+    elif language == "ja":
+        full_data = pd.DataFrame(columns=["french", "japanese"])
 
         client = bigquery.Client()
         query_job = client.query(all_tables_id_query)
@@ -173,7 +173,7 @@ def load_all_data(
 
         for id in table_id:
             logging.info(f"Loading the {id} table")
-            if id == "processed_russian_ccmatrix":
+            if id == "processed_japanese_full":
                 full_data = get_dataframe_from_bq(id)
             else:
                 continue

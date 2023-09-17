@@ -7,7 +7,7 @@ sys.path.insert(0, "./Deepl_reproduction")
 st.title("Deepl Reproduction project")
 st.write("Welcome page")
 
-options = [" ", "English", "Russian", "Chinese"]
+options = [" ", "English", "Russian", "Japanese"]
 
 # Sélectionnez une option à partir de la liste déroulante
 selection = st.selectbox(
@@ -25,7 +25,7 @@ if selection == "English":
 
 elif selection == "Russian":
     st.write("The traduction from french to Russian is not available yet")
-elif selection == "Chinese":
+elif selection == "Japanese":
     st.write("The traduction from french to Chinese is not available yet")
 
 
