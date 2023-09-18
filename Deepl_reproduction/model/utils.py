@@ -97,9 +97,14 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
     :param max_length_ratio: exclude sequence pairs where one is much longer than the other
     :param retain_case: retain case?
     """
+
+    src_language="french"
+    target_language="russian"
+    src_short="fr"
+    trg_short="ru"
     # Read raw files and combine
-    french = list()
-    english = list()
+    src = list()
+    trg = list()
     files = list()
     
 
@@ -111,48 +116,48 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
     
     os.chdir("Deepl_reproduction/model")
     data_folder=os.getcwd()
-    french_sentences=X_train["french"].tolist()
-    english_sentences=X_train["english"].tolist()
-    french_sentences=[str(sentence).lower() for sentence in french_sentences]
-    english_sentences=[str(sentence).lower() for sentence in english_sentences]
+    src_sentences=X_train[src_language].tolist()
+    trg_sentences=X_train[target_language].tolist()
+    src_sentences=[str(sentence).lower() for sentence in src_sentences]
+    trg_sentences=[str(sentence).lower() for sentence in trg_sentences]
 
-    assert len(french_sentences)==len(english_sentences), "The two sentence sets do not have the same size"
-    french.extend(french_sentences)
-    english.extend(english_sentences)
+    assert len(src_sentences)==len(trg_sentences), "The two sentence sets do not have the same size"
+    src.extend(src_sentences)
+    trg.extend(trg_sentences)
 
-    french_test=X_test["french"].tolist()
-    english_test=X_test["english"].tolist()
-    french_test=[str(sentence).lower() for sentence in french_test]
-    english_test=[str(sentence).lower() for sentence in english_test]
+    src_test=X_test[src_language].tolist()
+    trg_test=X_test[target_language].tolist()
+    src_test=[str(sentence).lower() for sentence in src_test]
+    trg_test=[str(sentence).lower() for sentence in trg_test]
 
-    french_val=X_val["french"].tolist()
-    english_val=X_val["english"].tolist()
-    french_val=[str(sentence).lower() for sentence in french_val]
-    english_val=[str(sentence).lower() for sentence in english_val]
+    src_val=X_val[src_language].tolist()
+    trg_val=X_val[target_language].tolist()
+    src_val=[str(sentence).lower() for sentence in src_val]
+    trg_val=[str(sentence).lower() for sentence in trg_val]
 
-    with open(os.path.join(data_folder, "test.fr"), "w", encoding="utf-8") as f:
-        f.write("\n".join(french_test))
-    with open(os.path.join(data_folder, "test.en"), "w", encoding="utf-8") as f:
-        f.write("\n".join(english_test))
-    with open(os.path.join(data_folder, "val.fr"), "w", encoding="utf-8") as f:
-        f.write("\n".join(french_val))
-    with open(os.path.join(data_folder, "val.en"), "w", encoding="utf-8") as f:
-        f.write("\n".join(english_val))
+    with open(os.path.join(data_folder, "test."+src_short), "w", encoding="utf-8") as f:
+        f.write("\n".join(trg_test))
+    with open(os.path.join(data_folder, "test."+trg_short), "w", encoding="utf-8") as f:
+        f.write("\n".join(trg_test))
+    with open(os.path.join(data_folder, "val."+src_short), "w", encoding="utf-8") as f:
+        f.write("\n".join(trg_val))
+    with open(os.path.join(data_folder, "val."+trg_short), "w", encoding="utf-8") as f:
+        f.write("\n".join(trg_val))
 
     print("\nCombining...")
     # Write to file so stuff can be freed from memory
     print("\nWriting to single files...")
-    with open(os.path.join(data_folder, "train.en"), "w", encoding="utf-8") as f:
-        f.write("\n".join(english))
-    with open(os.path.join(data_folder, "train.fr"), "w", encoding="utf-8") as f:
-        f.write("\n".join(french))
-    with open(os.path.join(data_folder, "train.fren"), "w", encoding="utf-8") as f:
-        f.write("\n".join(french + english))
-    del english, french  # free some RAM
+    with open(os.path.join(data_folder, "train."+trg_short), "w", encoding="utf-8") as f:
+        f.write("\n".join(trg_sentences))
+    with open(os.path.join(data_folder, "train."+src_short), "w", encoding="utf-8") as f:
+        f.write("\n".join(src_sentences))
+    with open(os.path.join(data_folder, "train."+src_short+trg_short), "w", encoding="utf-8") as f:
+        f.write("\n".join(src + trg))
+    del src, trg  # free some RAM
     
     # Perform BPE
     print("\nLearning BPE...")
-    youtokentome.BPE.train(data=os.path.join(data_folder, "train.fren"), vocab_size=37000,
+    youtokentome.BPE.train(data=os.path.join(data_folder, "train."+src_short+trg_short), vocab_size=37000,
                            model=os.path.join(data_folder, "bpe.model"))
 
     # Load BPE model
@@ -161,15 +166,15 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
 
     # Re-read English, French
     print("\nRe-reading single files...")
-    with open(os.path.join(data_folder, "train.en"), "r", encoding="utf-8") as f:
-        english = f.read().split("\n")
-    with open(os.path.join(data_folder, "train.fr"), "r", encoding="utf-8") as f:
-        french = f.read().split("\n")
+    with open(os.path.join(data_folder, "train."+trg_short), "r", encoding="utf-8") as f:
+        trg = f.read().split("\n")
+    with open(os.path.join(data_folder, "train."+src_short), "r", encoding="utf-8") as f:
+        src = f.read().split("\n")
 
     # Filter
     print("\nFiltering...")
     pairs = list()
-    for en, de in tqdm(zip(english, french), total=len(english)):
+    for en, de in tqdm(zip(trg, src), total=len(trg)):
         en_tok = bpe_model.encode(en, output_type=youtokentome.OutputType.ID)
         fr_tok = bpe_model.encode(de, output_type=youtokentome.OutputType.ID)
         len_en_tok = len(en_tok)
@@ -181,19 +186,19 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
         else:
             continue
     print("\nNote: %.2f per cent of en-de pairs were filtered out based on sub-word sequence length limits." % (100. * (
-            len(english) - len(pairs)) / len(english)))
+            len(trg) - len(pairs)) / len(trg)))
 
     # Rewrite files
-    english, french = zip(*pairs)
+    trg, srcc = zip(*pairs)
     print("\nRe-writing filtered sentences to single files...")
-    os.remove(os.path.join(data_folder, "train.en"))
-    os.remove(os.path.join(data_folder, "train.fr"))
-    os.remove(os.path.join(data_folder, "train.fren"))
-    with codecs.open(os.path.join(data_folder, "train.en"), "w", encoding="utf-8") as f:
-        f.write("\n".join(english))
-    with codecs.open(os.path.join(data_folder, "train.fr"), "w", encoding="utf-8") as f:
-        f.write("\n".join(french))
-    del english, french, bpe_model, pairs
+    os.remove(os.path.join(data_folder, "train."+trg_short))
+    os.remove(os.path.join(data_folder, "train."+src_short))
+    os.remove(os.path.join(data_folder, "train."+src_short+trg_short))
+    with codecs.open(os.path.join(data_folder, "train."+trg_short), "w", encoding="utf-8") as f:
+        f.write("\n".join(trg))
+    with codecs.open(os.path.join(data_folder, "train."+src_short), "w", encoding="utf-8") as f:
+        f.write("\n".join(src))
+    del src, trg, bpe_model, pairs
 
     print("\n...DONE!\n")
 

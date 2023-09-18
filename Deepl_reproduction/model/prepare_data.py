@@ -1,5 +1,6 @@
-from utils import *
 import os
+import pandas as pd 
+from utils import *
 from Deepl_reproduction.pipeline.data_loading import *
 from Deepl_reproduction.logs.logs import main
 
@@ -14,8 +15,9 @@ data_path="Deepl_reproduction/model/data/full_df.csv"
 if not os.path.exists(data_path):
     if not os.path.exists("Deepl_reproduction/model/data"):
         os.mkdir("Deepl_reproduction/model/data")
-    data=load_all_data()
+    data=load_all_data(language="ru")
     data.to_csv(data_path,index=False)
+
 
 prepare_data(data_folder=data_path,
              euro_parl=True,

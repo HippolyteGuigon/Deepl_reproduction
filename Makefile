@@ -16,5 +16,5 @@ launch_front_database_docker_image:
 	docker build -t front_database_image:latest  -f Dockerfile-front-database .
 	docker run -d -p 3306:3306 --name local-mysql-container front_database_image
 
-launch_streamlit:
-	streamlit run app.py
+launch_streamlit:		
+	sudo docker run -p 8501:8501 streamlit_image:latest

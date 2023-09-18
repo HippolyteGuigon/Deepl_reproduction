@@ -62,12 +62,12 @@ def main():
     # Initialize data-loaders
     train_loader = SequenceLoader(data_folder=data_folder,
                                   source_suffix="fr",
-                                  target_suffix="en",
+                                  target_suffix="ru",
                                   split="train",
                                   tokens_in_batch=tokens_in_batch)
     val_loader = SequenceLoader(data_folder=data_folder,
                                 source_suffix="fr",
-                                target_suffix="en",
+                                target_suffix="ru",
                                 split="val",
                                 tokens_in_batch=tokens_in_batch)
 
@@ -148,7 +148,7 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
     start_data_time = time.time()
     start_step_time = time.time()
 
-    bucket = client.get_bucket('english_deepl_bucket')
+    bucket = client.get_bucket('russian_deepl_bucket')
     blobs = bucket.list_blobs()
     file_names = [blob.name for blob in blobs if blob.name!="bpe.model"]
 
