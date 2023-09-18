@@ -40,6 +40,10 @@ def load_model(load_gcp: bool=True, load_best=True, **kwargs)->torch:
     if load_gcp:
         bucket = client.get_bucket('english_deepl_bucket')
 
+        if not os.path.exists(os.path.join(save_path,"bpe.model")):
+                blob = bucket.blob("bpe.model")
+                blob.download_to_filename(os.path.join(save_path,"bpe.model"))
+
         if load_best:
             blobs = bucket.list_blobs()
             file_names = [blob.name for blob in blobs if blob.name!="bpe.model"]
@@ -51,6 +55,8 @@ def load_model(load_gcp: bool=True, load_best=True, **kwargs)->torch:
             logging.info(f"Downloading {best_model_name} model...")
             blob = bucket.blob(best_model_name)
             blob.download_to_filename(final_save_path)
+
+            
             logging.info(f"Model {best_model_name} successfully downloaded under the path {final_save_path}")
             model=torch.load(final_save_path)
             return model
