@@ -1,23 +1,26 @@
 version: '3'
+
 services:
   data-fetcher:
     build:
-      context: ./Dockerfile-model-loading 
+      context: .
+      dockerfile: Dockerfile-model-loading  # Le chemin vers le Dockerfile du service data-fetcher
     volumes:
-      - ./data:/app/model_bucket 
+      - ./data:/app/model_bucket
+    command: sh -c "sleep 10 && gsutil cp gs://english_deepl_bucket/deepl_english_model_loss_2_881014585494995.pth.tar model_bucket/ && gsutil cp gs://english_deepl_bucket/bpe.model model_bucket/"
     networks:
       - mynetwork
-    command: sh -c "sleep 10 && streamlit run /app/app.py" # Laissez le conteneur actif pendant un certain temps pour permettre le téléchargement
 
   streamlit-app:
     build:
-      context: ./Dockerfile-streamlit 
+      context: .
+      dockerfile: Dockerfile-streamlit  # Le chemin vers le Dockerfile du service streamlit-app
     ports:
-      - "8501:8501" # Mappez le port du conteneur Streamlit sur le port de l'hôte
+      - "8501:8501"
     depends_on:
-      - data-fetcher # Assurez-vous que le service de téléchargement de données est prêt avant de démarrer l'application Streamlit
+      - data-fetcher
     networks:
       - mynetwork
 
 networks:
-  mynetwork: # Définissez un réseau personnalisé pour que les services puissent communiquer entre eux
+  mynetwork:
