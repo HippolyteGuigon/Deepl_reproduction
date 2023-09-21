@@ -28,7 +28,7 @@ jobs:
         python3 -m pip install --upgrade pip
         python3 setup.py install
         pip install flake8 pytest
-        pip3 install Cython
+        python3 -m pip install cython
         if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
         pip3 install --upgrade mysql-connector-python
         pip3 install google-cloud-bigquery
