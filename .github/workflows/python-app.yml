@@ -36,6 +36,7 @@ jobs:
         pip3 install mysqlclient
         pip3 install PyMySQL
         pip3 install cryptography
+      continue-on-error: true
     - name: Test with pytest
       run: |
         pytest
