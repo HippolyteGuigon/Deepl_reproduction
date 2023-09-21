@@ -28,9 +28,7 @@ jobs:
         python3 -m pip install --upgrade pip
         python3 setup.py install
         pip install flake8 pytest
-        python3 -m pip install cython
-        echo "Cython<3" > cython_constraint.txt
-        PIP_CONSTRAINT=cython_constraint.txt pip install "ai-core-sdk[aicore-content]"
+        sed -i '23d' requirements.txt
         pip3 install -r requirements.txt
         pip3 install --upgrade mysql-connector-python
         pip3 install google-cloud-bigquery
