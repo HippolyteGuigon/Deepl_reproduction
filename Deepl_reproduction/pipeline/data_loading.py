@@ -68,8 +68,10 @@ def get_dataframe_from_bq(
         query = f"""
         SELECT *
         FROM `{project_id}.{dataset_id}.{table_id}`
+        WHERE LENGTH(english)<1000 AND LENGTH(french)<1000
         LIMIT {kaggle_length}
         """
+
     else:
         query = f"""
         SELECT *
@@ -123,8 +125,9 @@ def load_all_data(
         table_id = [row.table_id for row in results]
 
         for id in table_id:
-            logging.info(f"Loading the {id} table")
+            
             if id == "processed_eventregistry":
+                logging.info(f"Loading the {id} table")
                 df = get_dataframe_from_bq(id)
                 full_data = pd.concat(
                     [
@@ -143,6 +146,7 @@ def load_all_data(
                     ]
                 )
             elif id == "processed_wikipedia":
+                logging.info(f"Loading the {id} table")
                 df = get_dataframe_from_bq(id)
                 full_data = pd.concat(
                     [
@@ -156,6 +160,7 @@ def load_all_data(
                     ]
                 )
             elif id == "processed_kaggle_dataset":
+                logging.info(f"Loading the {id} table")
                 df = get_dataframe_from_bq(id, kaggle_length=kaggle_length)
                 full_data = pd.concat([full_data, df[["french", "english"]]])
             else:
@@ -172,9 +177,11 @@ def load_all_data(
         table_id = [row.table_id for row in results]
 
         for id in table_id:
-            logging.info(f"Loading the {id} table")
-            if id == "processed_japanese_full":
-                full_data = get_dataframe_from_bq(id)
+            
+            if id=="processed_japanese_opus":
+                logging.info(f"Loading the {id} table")
+                df = get_dataframe_from_bq(id)
+                full_data = pd.concat([full_data, df[["french", "japanese"]]])
             else:
                 continue
 
