@@ -49,6 +49,7 @@ class SequenceLoader(object):
             source_data = f.read().split("\n")[:-1]
         with codecs.open(os.path.join(data_folder, ".".join([split, target_suffix])), "r", encoding="utf-8") as f:
             target_data = f.read().split("\n")[:-1]
+        
         assert len(source_data) == len(target_data), "There are a different number of source or target sequences!"
         source_lengths = [len(s) for s in self.bpe_model.encode(source_data, bos=False, eos=False)]
         target_lengths = [len(t) for t in self.bpe_model.encode(target_data, bos=True,

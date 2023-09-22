@@ -11,7 +11,7 @@ dropout : 0.1
 checkpoint: None
 #checkpoint : 'Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar'  
 tokens_in_batch : 2000  
-batches_per_step : 25000 
+batches_per_step : 5000 
 print_frequency : 5  
 n_steps : 1000000  
 warmup_steps : 8000  

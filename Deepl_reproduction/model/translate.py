@@ -5,6 +5,8 @@ import torch.nn.functional as F
 import youtokentome
 import math
 import sys
+sys.path.insert(0, "./")
+
 from Deepl_reproduction.model.model import Transformer
 
 # Device
@@ -12,7 +14,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # BPE Model
 bpe_model = youtokentome.BPE(model=os.path.join(os.getcwd(),"Deepl_reproduction/model/bpe.model"))
-sys.path.insert(0, "./")
 
 # Transformer model
 

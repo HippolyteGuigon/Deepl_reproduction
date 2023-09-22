@@ -99,9 +99,9 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
     """
 
     src_language="french"
-    target_language="russian"
+    target_language="japanese"
     src_short="fr"
-    trg_short="ru"
+    trg_short="ja"
     # Read raw files and combine
     src = list()
     trg = list()
@@ -124,6 +124,7 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
     assert len(src_sentences)==len(trg_sentences), "The two sentence sets do not have the same size"
     src.extend(src_sentences)
     trg.extend(trg_sentences)
+    assert len(src_sentences)==len(trg_sentences), "The two sentence sets do not have the same size"
 
     src_test=X_test[src_language].tolist()
     trg_test=X_test[target_language].tolist()
@@ -136,11 +137,11 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
     trg_val=[str(sentence).lower() for sentence in trg_val]
 
     with open(os.path.join(data_folder, "test."+src_short), "w", encoding="utf-8") as f:
-        f.write("\n".join(trg_test))
+        f.write("\n".join(src_test))
     with open(os.path.join(data_folder, "test."+trg_short), "w", encoding="utf-8") as f:
         f.write("\n".join(trg_test))
     with open(os.path.join(data_folder, "val."+src_short), "w", encoding="utf-8") as f:
-        f.write("\n".join(trg_val))
+        f.write("\n".join(src_val))
     with open(os.path.join(data_folder, "val."+trg_short), "w", encoding="utf-8") as f:
         f.write("\n".join(trg_val))
 
@@ -148,9 +149,9 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
     # Write to file so stuff can be freed from memory
     print("\nWriting to single files...")
     with open(os.path.join(data_folder, "train."+trg_short), "w", encoding="utf-8") as f:
-        f.write("\n".join(trg_sentences))
+        f.write("\n".join(trg))
     with open(os.path.join(data_folder, "train."+src_short), "w", encoding="utf-8") as f:
-        f.write("\n".join(src_sentences))
+        f.write("\n".join(src))
     with open(os.path.join(data_folder, "train."+src_short+trg_short), "w", encoding="utf-8") as f:
         f.write("\n".join(src + trg))
     del src, trg  # free some RAM
@@ -189,15 +190,20 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
             len(trg) - len(pairs)) / len(trg)))
 
     # Rewrite files
-    trg, srcc = zip(*pairs)
+    trg, src = zip(*pairs)
     print("\nRe-writing filtered sentences to single files...")
     os.remove(os.path.join(data_folder, "train."+trg_short))
     os.remove(os.path.join(data_folder, "train."+src_short))
     os.remove(os.path.join(data_folder, "train."+src_short+trg_short))
+
+    assert len(trg)==len(src)
+    print(len(src),len(trg))
     with codecs.open(os.path.join(data_folder, "train."+trg_short), "w", encoding="utf-8") as f:
         f.write("\n".join(trg))
+
     with codecs.open(os.path.join(data_folder, "train."+src_short), "w", encoding="utf-8") as f:
         f.write("\n".join(src))
+
     del src, trg, bpe_model, pairs
 
     print("\n...DONE!\n")

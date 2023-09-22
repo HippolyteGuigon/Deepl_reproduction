@@ -36,7 +36,7 @@ positional_encoding = get_positional_encoding(d_model=d_model,
                                               max_length=160)  # positional encodings up to the maximum possible pad-length
 
 # Learning parameters
-checkpoint = main_params['checkpoint']  # path to model checkpoint, None if none
+checkpoint = None  # path to model checkpoint, None if none
 tokens_in_batch = main_params['tokens_in_batch']  # batch size in target language tokens
 batches_per_step = main_params['batches_per_step'] // tokens_in_batch  # perform a training step, i.e. update parameters, once every so many batches
 print_frequency = main_params['print_frequency']  # print status once every so many steps
@@ -62,12 +62,12 @@ def main():
     # Initialize data-loaders
     train_loader = SequenceLoader(data_folder=data_folder,
                                   source_suffix="fr",
-                                  target_suffix="ru",
+                                  target_suffix="ja",
                                   split="train",
                                   tokens_in_batch=tokens_in_batch)
     val_loader = SequenceLoader(data_folder=data_folder,
                                 source_suffix="fr",
-                                target_suffix="ru",
+                                target_suffix="ja",
                                 split="val",
                                 tokens_in_batch=tokens_in_batch)
 
@@ -126,6 +126,20 @@ def main():
         # Save checkpoint
         save_checkpoint(epoch, model, optimizer)
 
+def save_best_model(language: str, min_loss: float)->None:
+    assert language in ["english", "japanese"], "Language must be either english or japanese"
+
+    if language=="english":
+        bucket_name="english_deepl_bucket"
+        bucket = client.get_bucket(bucket_name)
+        name_model='deepl_english_model_loss_'+str(min_loss).replace(".","_")+'.pth.tar'
+    else: 
+        bucket_name="japanese_deepl_bucket"
+        bucket = client.get_bucket(bucket_name)
+        name_model='deepl_japanese_model_loss_'+str(min_loss).replace(".","_")+'.pth.tar'
+    blob = bucket.blob(name_model)
+    blob.upload_from_filename('Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar')
+    logging.warning(f"Model was successfully saved une the name {name_model} in the bucket {bucket_name}")
 
 def train(train_loader, model, criterion, optimizer, epoch, step):
     """
@@ -148,7 +162,7 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
     start_data_time = time.time()
     start_step_time = time.time()
 
-    bucket = client.get_bucket('russian_deepl_bucket')
+    bucket = client.get_bucket('japanese_deepl_bucket')
     blobs = bucket.list_blobs()
     file_names = [blob.name for blob in blobs if blob.name!="bpe.model"]
 
@@ -227,12 +241,7 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
                 if losses.val<min_loss_gcp:
                     logging.warning(f"A new record of {min_loss_gcp:.2f} was hit for the model !")
                     min_loss_gcp=losses.val
-                    bucket = client.get_bucket('english_deepl_bucket')
-                    name_model='deepl_english_model_loss_'+str(min_loss_gcp).replace(".","_")+'.pth.tar'
-                    blob = bucket.blob(name_model)
-                    blob.upload_from_filename('Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar')
-                    logging.warning(f"Model was successfully saved une the name {name_model} in the bucket english_deepl_bucket")
-
+                    save_best_model("japanese",min_loss_gcp)
                 
         # Reset data time
         start_data_time = time.time()
