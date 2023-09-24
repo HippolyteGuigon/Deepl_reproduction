@@ -37,7 +37,7 @@ def load_model(language: str="english", load_gcp: bool=True, load_best=True, **k
 
     save_path='Deepl_reproduction/model'
     
-    assert language in ["english", "japanese"], "The model loaded should be either french or japanese !"
+    assert language in ["english", "japanese"], "The model loaded should be either french or japanese!"
 
     if load_gcp:
         if language=="english":
