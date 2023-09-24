@@ -36,7 +36,7 @@ positional_encoding = get_positional_encoding(d_model=d_model,
                                               max_length=160)  # positional encodings up to the maximum possible pad-length
 
 # Learning parameters
-checkpoint = None  # path to model checkpoint, None if none
+checkpoint = main_params["checkpoint"]  # path to model checkpoint, None if none
 tokens_in_batch = main_params['tokens_in_batch']  # batch size in target language tokens
 batches_per_step = main_params['batches_per_step'] // tokens_in_batch  # perform a training step, i.e. update parameters, once every so many batches
 print_frequency = main_params['print_frequency']  # print status once every so many steps
@@ -119,9 +119,9 @@ def main():
 
         # One epoch's validation
         val_loader.create_batches()
-        validate(val_loader=val_loader,
-                 model=model,
-                 criterion=criterion)
+        #validate(val_loader=val_loader,
+        #         model=model,
+        #         criterion=criterion)
 
         # Save checkpoint
         save_checkpoint(epoch, model, optimizer)
@@ -164,12 +164,12 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
 
     bucket = client.get_bucket('japanese_deepl_bucket')
     blobs = bucket.list_blobs()
-    file_names = [blob.name for blob in blobs if blob.name!="bpe.model"]
+    file_names = [blob.name for blob in blobs if "bpe" not in blob.name]
 
     if len(file_names)==0:
         min_loss_gcp=5
     else:
-        loss_gcp=[name.replace('deepl_english_model_loss_','').replace('.pth.tar','') for name in file_names]
+        loss_gcp=[name.split("_model_loss_")[-1].replace('.pth.tar','') for name in file_names]
         loss_gcp=[float(loss.replace("_",".")) for loss in loss_gcp]
         min_loss_gcp=min(loss_gcp)
         logging.warning(f"The smallest lost found in the bucket is: {min_loss_gcp} and will be taken as reference")

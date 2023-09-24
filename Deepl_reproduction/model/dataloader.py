@@ -2,6 +2,7 @@ import youtokentome
 import codecs
 import os
 import torch
+import glob
 from random import shuffle
 from itertools import groupby
 from torch.nn.utils.rnn import pad_sequence
@@ -42,7 +43,8 @@ class SequenceLoader(object):
         self.for_training = self.split == "train"
 
         # Load BPE model
-        self.bpe_model = youtokentome.BPE(model=os.path.join(data_folder, "bpe.model"))
+        bpe_model_path=glob.glob(os.path.join(data_folder, "bpe*.model"))[0]
+        self.bpe_model = youtokentome.BPE(model=bpe_model_path)
 
         # Load data
         with codecs.open(os.path.join(data_folder, ".".join([split, source_suffix])), "r", encoding="utf-8") as f:

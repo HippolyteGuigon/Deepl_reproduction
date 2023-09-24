@@ -21,7 +21,7 @@ japanese_data/
 .profile
 get-pip.py
 model_example.py
-Deepl_reproduction/model/bpe.model
+Deepl_reproduction/model/bpe*.model
 Deepl_reproduction/model/*.en
 Deepl_reproduction/model/*.fr
 Deepl_reproduction/model/*.pth.tar

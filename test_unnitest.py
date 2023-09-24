@@ -120,7 +120,7 @@ class Test(unittest.TestCase):
         sys.path.insert(0, "Deepl_reproduction")
         bucket = client.get_bucket("english_deepl_bucket")
         blobs = bucket.list_blobs()
-        file_names = [blob.name for blob in blobs if blob.name != "bpe.model"]
+        file_names = [blob.name for blob in blobs if "bpe" not in blob.name]
         loss_gcp = [
             name.replace("deepl_english_model_loss_", "").replace(".pth.tar", "")
             for name in file_names

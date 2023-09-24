@@ -17,7 +17,7 @@ local_model_path=main_params['checkpoint']
 
 client = storage.Client.from_service_account_json('deepl_api_key.json', project='deepl-reprodution')
 
-def load_model(load_gcp: bool=True, load_best=True, **kwargs)->torch:
+def load_model(language: str="english", load_gcp: bool=True, load_best=True, **kwargs)->torch:
     """
     The goal of this function is to load
     the traduction model either from google
@@ -36,18 +36,26 @@ def load_model(load_gcp: bool=True, load_best=True, **kwargs)->torch:
     """
 
     save_path='Deepl_reproduction/model'
+    
+    assert language in ["english", "japanese"], "The model loaded should be either french or japanese !"
 
     if load_gcp:
-        bucket = client.get_bucket('english_deepl_bucket')
+        if language=="english":
+            bucket = client.get_bucket('english_deepl_bucket')
+            if not os.path.exists(os.path.join(save_path,"bpe_english.model")):
+                blob = bucket.blob("bpe_english.model")
+                blob.download_to_filename(os.path.join(save_path,"bpe_english.model"))
 
-        if not os.path.exists(os.path.join(save_path,"bpe.model")):
-                blob = bucket.blob("bpe.model")
-                blob.download_to_filename(os.path.join(save_path,"bpe.model"))
+        elif language=="japanese":
+            bucket = client.get_bucket('japanese_deepl_bucket')
+            if not os.path.exists(os.path.join(save_path,"bpe_japanese.model")):
+                blob = bucket.blob("bpe_japanese.model")
+                blob.download_to_filename(os.path.join(save_path,"bpe_japanese.model"))
 
         if load_best:
             blobs = bucket.list_blobs()
-            file_names = [blob.name for blob in blobs if blob.name!="bpe.model"]
-            loss_gcp=[name.replace('deepl_english_model_loss_','').replace('.pth.tar','') for name in file_names]
+            file_names = [blob.name for blob in blobs if "bpe"  not in blob.name]
+            loss_gcp=[name.split("model_loss_")[-1].replace('.pth.tar','') for name in file_names]
             loss_gcp=[float(loss.replace("_",".")) for loss in loss_gcp]
             min_loss_gcp=min(loss_gcp)
             best_model_name=[name for name in file_names if str(min_loss_gcp).replace(".", "_") in name][0]
@@ -77,7 +85,3 @@ def load_model(load_gcp: bool=True, load_best=True, **kwargs)->torch:
     else:
         model=torch.load(local_model_path)
         return model
-    
-if __name__=="__main__":
-    model=load_model(load_best=False,gcp_model_name="deepl_english_model_loss_3_181002616882324.pth.tar")
-

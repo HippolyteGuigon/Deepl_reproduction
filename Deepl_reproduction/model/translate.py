@@ -13,7 +13,8 @@ from Deepl_reproduction.model.model import Transformer
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # BPE Model
-bpe_model = youtokentome.BPE(model=os.path.join(os.getcwd(),"Deepl_reproduction/model/bpe.model"))
+bpe_model_path=glob.glob(os.path.join(os.getcwd(),"Deepl_reproduction/model/bpe*"))[0]
+bpe_model = youtokentome.BPE(model=bpe_model_path)
 
 # Transformer model
 
