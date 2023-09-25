@@ -7,9 +7,9 @@ RUN apt-get update && \
     apt-get update -y && \
     apt-get install google-cloud-sdk -y
 
-WORKDIR app/
+WORKDIR /app
 
-RUN mkdir model_bucket/
+RUN mkdir ./model_bucket
 
 RUN gsutil cp gs://english_deepl_bucket/deepl_english_model_loss_2_881014585494995.pth.tar model_bucket/ &&\
     gsutil cp gs://english_deepl_bucket/bpe_english.model model_bucket/ 

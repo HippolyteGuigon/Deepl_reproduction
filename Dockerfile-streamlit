@@ -5,13 +5,14 @@ FROM python:3.9-slim
 WORKDIR /app
 
 COPY . /app 
-RUN find . -name "*.pth.tar"
-RUN ls ./
-RUN ls ./data/
-COPY ./data/deepl_english_model_loss_2_881014585494995.pth.tar Deepl_reproduction/model/
-COPY ./data/deepl_japanese_model_loss_3_7730557918548584.pth.tar Deepl_reproduction/model/
-COPY ./data/bpe_english.model Deepl_reproduction/model/
-COPY ./data/bpe_japanese.model Deepl_reproduction/model/
+
+RUN ls
+RUN pwd
+
+COPY model_bucket/deepl_english_model_loss_2_881014585494995.pth.tar Deepl_reproduction/model/
+COPY model_bucket/deepl_japanese_model_loss_3_7730557918548584.pth.tar Deepl_reproduction/model/
+COPY model_bucket/bpe_english.model Deepl_reproduction/model/
+COPY model_bucket/bpe_japanese.model Deepl_reproduction/model/
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -38,4 +39,3 @@ EXPOSE 8501
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
 ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.fileWatcherType","none"]
-
