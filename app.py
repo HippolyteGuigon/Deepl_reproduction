@@ -19,14 +19,19 @@ if selection == "English":
     st.write("You have chosen to translate from French to :", selection)
     if len(glob.glob("Deepl_reproduction/model/*.pth.tar")) == 0:
         st.write("Loading model...")
-        load_model()
+        load_model(language="english")
+    else:
+        pass
+
+elif selection == "Japanese":
+    if len(glob.glob("Deepl_reproduction/model/*.pth.tar")) == 0:
+        st.write("Loading model...")
+        load_model(language="japanese")
     else:
         pass
 
 elif selection == "Russian":
-    st.write("The traduction from french to Russian is not available yet")
-elif selection == "Japanese":
-    st.write("The traduction from french to Chinese is not available yet")
+    st.write("The traduction from french to russian is not available yet")
 
 
 texte_a_traduire = st.text_input(
@@ -40,7 +45,11 @@ if st.button("Translate"):
     # Exemple de code de traduction fictif :
     from Deepl_reproduction.model.translate import translate
 
-    translation, _ = translate(texte_a_traduire)
+    if selection=="English":
+        translation, _ = translate(texte_a_traduire,language="english")
+    elif selection=="Japanese":
+        translation, _ = translate(texte_a_traduire,language="japanese")
+
     translation = translation.replace("<BOS>", "").replace("<EOS>", "").strip()
     translation = translation.capitalize()
 

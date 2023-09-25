@@ -12,4 +12,8 @@ WORKDIR app/
 RUN mkdir model_bucket/
 
 RUN gsutil cp gs://english_deepl_bucket/deepl_english_model_loss_2_881014585494995.pth.tar model_bucket/ &&\
-    gsutil cp gs://english_deepl_bucket/bpe_english.model model_bucket/
+    gsutil cp gs://english_deepl_bucket/bpe_english.model model_bucket/ 
+
+RUN gsutil cp gs://japanese_deepl_bucket/bpe_japanese.model model_bucket/ &&\
+    gsutil cp gs://japanese_deepl_bucket/deepl_japanese_model_loss_3_7730557918548584.pth.tar model_bucket/
+

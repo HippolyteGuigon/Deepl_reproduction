@@ -1,0 +1,30 @@
+# Fichiers d'entraînement de traduction 
+*.ja
+*.fr 
+*.csv
+
+Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar
+Deepl_reproduction/model/bpe.model
+japanese_data/
+Deepl_reproduction/model/*.ja
+Deepl_reproduction/model/*.fr
+
+# Exclure les fichiers et répertoires de version control
+.git
+.gitignore
+
+# Exclure les fichiers Python bytecode
+__pycache__
+
+# Exclure les fichiers de sauvegarde de l'éditeur
+*.swp
+*.swo
+
+# Exclure les fichiers logs
+*.log
+
+# Exclure les fichiers temporaires
+*.tmp
+
+# Exclure les fichiers de configuration locale
+.env

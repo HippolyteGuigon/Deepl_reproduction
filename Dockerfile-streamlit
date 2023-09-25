@@ -5,6 +5,13 @@ FROM python:3.9-slim
 WORKDIR /app
 
 COPY . /app 
+RUN find . -name "*.pth.tar"
+RUN ls ./
+RUN ls ./data/
+COPY ./data/deepl_english_model_loss_2_881014585494995.pth.tar Deepl_reproduction/model/
+COPY ./data/deepl_japanese_model_loss_3_7730557918548584.pth.tar Deepl_reproduction/model/
+COPY ./data/bpe_english.model Deepl_reproduction/model/
+COPY ./data/bpe_japanese.model Deepl_reproduction/model/
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -17,9 +24,18 @@ RUN python3 setup.py install
 RUN pip3 install --upgrade pip
 RUN pip3 install Cython
 RUN pip3 install -r requirements.txt
+RUN pip3 install --upgrade mysql-connector-python
+RUN pip3 install google-cloud-bigquery
+RUN pip3 install wheel
+RUN pip3 install pymysql
+RUN pip3 install cryptography
+RUN pip3 install --upgrade google-cloud-storage
+RUN pip3 install --upgrade google-cloud-translate
+RUN pip3 install google-cloud-language
 
 EXPOSE 8501
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
 ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.fileWatcherType","none"]
+

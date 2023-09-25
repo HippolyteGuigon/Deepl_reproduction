@@ -32,7 +32,7 @@ else:
 model.eval()
 
 
-def translate(source_sequence, beam_size=4, length_norm_coefficient=0.6):
+def translate(source_sequence, language: str="english",beam_size=4, length_norm_coefficient=0.6):
     """
     Translates a source language sequence to the target language, with beam search decoding.
 
@@ -41,6 +41,23 @@ def translate(source_sequence, beam_size=4, length_norm_coefficient=0.6):
     :param length_norm_coefficient: co-efficient for normalizing decoded sequences' scores by their lengths
     :return: the best hypothesis, and all candidate hypotheses
     """
+
+    assert language in ["english", "japanese"], "Traduction is only available for english and japanese !"
+
+    if language=="english":
+        bpe_model_path=os.path.join(os.getcwd(),"Deepl_reproduction/model/bpe_english.model")
+        bpe_model = youtokentome.BPE(model=bpe_model_path)
+        model_path = os.path.join(os.getcwd(),"Deepl_reproduction/model/deepl_english_model_loss_2_881014585494995.pth.tar")
+        checkpoint = torch.load(model_path)
+        model = checkpoint["model"].to(device)
+
+    elif language=="japanese":
+        bpe_model_path=os.path.join(os.getcwd(),"Deepl_reproduction/model/bpe_japanese.model")
+        bpe_model = youtokentome.BPE(model=bpe_model_path)
+        model_path = os.path.join(os.getcwd(),"Deepl_reproduction/model/deepl_japanese_model_loss_3_7730557918548584.pth.tar")
+        checkpoint = torch.load(model_path)
+        model = checkpoint["model"].to(device)
+
     with torch.no_grad():
         # Beam size
         k = beam_size
