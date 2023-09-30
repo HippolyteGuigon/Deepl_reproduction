@@ -4,6 +4,7 @@
 *.ipynb
 *.csv
 *.pt
+*.ja
 .git-credentials
 .gitconfig
 .local/
