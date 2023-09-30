@@ -32,4 +32,13 @@ The all project was coded under PEP-8 (https://peps.python.org/pep-0008/) and fl
 
 ## How to use ?
 
-After having dealt with the installation step, just run ```streamlit run app.py``` then select the language you want to translate to and enjoy the result !
+There are two ways to run this application:
+
+* Classical way: After having dealt with the installation step, just run ```streamlit run app.py``` then select the language you want to translate to and enjoy the result !
+
+* Run with Docker:
+    * Make sure you have docker installed, if you don't, just follow the steps listed here: ```https://docs.docker.com/engine/install/ubuntu/```
+    * Build the image with the following command: ```docker build -t deepl_app:latest -f Dockerfile-model-loading .``` or with the MakeFile ```make build_deepl_image```
+    * Run the Docker Image with ```docker run -p 8501:8501 deepl_app:latest``` or with the MakeFile ```make launch_streamlit```
+    * Copy paste this link in your browser: ```http://0.0.0.0:8501```
+    * You're good to translate !

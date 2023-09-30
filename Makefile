@@ -16,5 +16,8 @@ launch_front_database_docker_image:
 	docker build -t front_database_image:latest  -f Dockerfile-front-database .
 	docker run -d -p 3306:3306 --name local-mysql-container front_database_image
 
+build_deepl_image:
+	docker build -t deepl_app:latest -f Dockerfile-model-loading .
+	
 launch_streamlit:		
-	sudo docker run -p 8501:8501 streamlit_image:latest
+	docker run -p 8501:8501 deepl_app:latest

@@ -1,0 +1,37 @@
+FROM python:3.8.17
+
+RUN apt-get update && \
+    apt-get install -y curl gnupg && \
+    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && \
+    apt-get update -y && \
+    apt-get install google-cloud-sdk -y
+
+WORKDIR /app
+COPY . /app
+
+RUN mkdir model_bucket/
+
+RUN gsutil cp gs://english_deepl_bucket/bpe_english.model /app/Deepl_reproduction/model/
+RUN gsutil cp gs://english_deepl_bucket/deepl_english_model_loss_2_881014585494995.pth.tar /app/Deepl_reproduction/model/
+RUN gsutil cp gs://japanese_deepl_bucket/bpe_japanese.model /app/Deepl_reproduction/model/
+RUN gsutil cp gs://japanese_deepl_bucket/deepl_japanese_model_loss_3_7730557918548584.pth.tar /app/Deepl_reproduction/model/
+
+RUN python3 setup.py install
+RUN pip3 install --upgrade pip
+RUN pip3 install Cython
+RUN pip3 install -r requirements.txt
+RUN pip3 install --upgrade mysql-connector-python
+RUN pip3 install google-cloud-bigquery
+RUN pip3 install wheel
+RUN pip3 install pymysql
+RUN pip3 install cryptography
+RUN pip3 install --upgrade google-cloud-storage
+RUN pip3 install --upgrade google-cloud-translate
+RUN pip3 install google-cloud-language
+
+EXPOSE 8501
+
+HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+
+ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.fileWatcherType","none"]
