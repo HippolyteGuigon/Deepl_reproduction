@@ -1,7 +1,9 @@
 import streamlit as st
 import sys
 import glob
+import os
 from Deepl_reproduction.model.model_loading import load_model
+from Deepl_reproduction.audio_generation.audio_generation import read_text, audio_save
 
 sys.path.insert(0, "./Deepl_reproduction")
 st.title("Deepl Reproduction project")
@@ -53,7 +55,23 @@ if st.button("Translate"):
     translation = translation.replace("<BOS>", "").replace("<EOS>", "").strip()
     translation = translation.capitalize()
 
+    st.session_state.translation = translation
+
     # Affichez le texte traduit
     st.write(texte_a_traduire)
     st.write("has been translated to: ")
     st.write(translation)
+
+if st.button("Read translation audio"):
+
+    if os.path.exists("output.wav"):
+        os.remove("output.wav")
+
+    translation=st.session_state.translation
+    if selection=="English":
+        audio_save(translation, lang='en')
+    elif selection=="Japanese":
+        audio_save(translation, lang='ja')
+
+    audio_wav = open('output.wav', "rb").read()
+    st.audio(audio_wav, format="audio/wav")

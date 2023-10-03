@@ -29,6 +29,8 @@ RUN pip3 install cryptography
 RUN pip3 install --upgrade google-cloud-storage
 RUN pip3 install --upgrade google-cloud-translate
 RUN pip3 install google-cloud-language
+RUN pip3 install pydub
+RUN pip3 install streamlit --upgrade
 
 EXPOSE 8501
 
