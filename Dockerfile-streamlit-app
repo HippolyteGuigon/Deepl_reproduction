@@ -31,6 +31,7 @@ RUN pip3 install --upgrade google-cloud-translate
 RUN pip3 install google-cloud-language
 RUN pip3 install pydub
 RUN pip3 install streamlit --upgrade
+RUN apt-get update && apt-get install -y ffmpeg
 
 EXPOSE 8501
 

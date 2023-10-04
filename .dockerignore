@@ -4,10 +4,12 @@
 *.csv
 
 Deepl_reproduction/model/steplast_transformer_checkpoint.pth.tar
-Deepl_reproduction/model/bpe.model
+Deepl_reproduction/model/*.pth.tar
+Deepl_reproduction/model/*.model
 japanese_data/
 Deepl_reproduction/model/*.ja
 Deepl_reproduction/model/*.fr
+Deepl_reproduction/model/*.en
 
 # Exclure les fichiers et répertoires de version control
 .git
