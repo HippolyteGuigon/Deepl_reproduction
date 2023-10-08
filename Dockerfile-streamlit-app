@@ -20,7 +20,32 @@ RUN gsutil cp gs://japanese_deepl_bucket/deepl_japanese_model_loss_3_77305579185
 RUN python3 setup.py install
 RUN pip3 install --upgrade pip
 RUN pip3 install Cython
-RUN pip3 install -r requirements.txt
+RUN pip3 install db_dtypes==1.1.1
+RUN pip3 install deepl==1.15.0
+RUN pip3 install eventregistry==9.1
+RUN pip3 install Flask==2.3.2
+RUN pip3 install functions_framework==3.4.0
+RUN pip3 install gtts==2.4.0
+RUN pip3 install nltk==3.8.1
+RUN pip3 install numpy==1.23.5
+RUN pip3 install pandas==2.0.0
+RUN pip3 install pandera==0.17.2
+RUN pip3 install protobuf==4.24.4
+RUN pip3 install pydub==0.25.1
+RUN pip3 install PyYAML==6.0.1
+RUN pip3 install requests==2.28.2
+RUN pip3 install sacrebleu==2.3.1
+RUN pip3 install scikit_learn==1.3.1
+RUN pip3 install setuptools==68.1.2
+RUN pip3 install SQLAlchemy==2.0.12
+RUN pip3 install streamlit==1.27.2
+RUN pip3 install nvidia-cudnn-cu11==8.5.0.96
+RUN pip3 install nvidia-cublas-cu11==11.10.3.66
+RUN pip3 install torch==2.0.1
+RUN pip3 install tqdm==4.65.0
+RUN pip3 install wget==3.2
+RUN pip3 install wikipedia==1.4.0
+RUN pip3 install youtokentome
 RUN pip3 install --upgrade mysql-connector-python
 RUN pip3 install google-cloud-bigquery
 RUN pip3 install wheel
@@ -29,12 +54,10 @@ RUN pip3 install cryptography
 RUN pip3 install --upgrade google-cloud-storage
 RUN pip3 install --upgrade google-cloud-translate
 RUN pip3 install google-cloud-language
-RUN pip3 install pydub
-RUN pip3 install streamlit --upgrade
 RUN apt-get update && apt-get install -y ffmpeg
 
-EXPOSE 8501
+EXPOSE 8080
 
-HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+HEALTHCHECK CMD curl --fail http://localhost:8080/_stcore/health
 
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.fileWatcherType","none"]
+ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8080", "--server.address=0.0.0.0", "--server.fileWatcherType","none"]

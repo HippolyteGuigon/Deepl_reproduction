@@ -20,4 +20,4 @@ build_deepl_image:
 	docker build -t deepl_app:latest -f Dockerfile-streamlit-app .
 
 launch_streamlit:		
-	docker run -p 8501:8501 deepl_app:latest
+	docker run -p 8080:8080 deepl_app:latest
