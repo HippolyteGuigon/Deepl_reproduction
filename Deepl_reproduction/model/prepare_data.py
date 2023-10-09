@@ -3,8 +3,10 @@ import pandas as pd
 import sys 
 from utils import *
 sys.path.insert(0,os.path.join(os.getcwd(),"Deepl_reproduction/pipeline"))
+sys.path.insert(0,os.path.join(os.getcwd(),"Deepl_reproduction/logs"))
+
 from data_loading import *
-from Deepl_reproduction.logs.logs import main
+from logs import main
 
 main()
 
@@ -17,7 +19,7 @@ data_path="Deepl_reproduction/model/data/full_df.csv"
 if not os.path.exists(data_path):
     if not os.path.exists("Deepl_reproduction/model/data"):
         os.mkdir("Deepl_reproduction/model/data")
-    data=load_all_data(language="ja")
+    data=load_all_data(language="en")
     data.to_csv(data_path,index=False)
 
 prepare_data(data_folder=data_path,

@@ -3,6 +3,7 @@ import torch.optim
 import torch.utils.data
 import time
 import os
+import argparse
 from model import Transformer, LabelSmoothedCE
 from dataloader import SequenceLoader
 from utils import *
@@ -17,6 +18,21 @@ main()
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument(
+    "language",
+    help="The language pipeline to launch",
+    nargs="?",
+    const="en",
+    type=str,
+)
+
+args = parser.parse_args()
+
+assert args.language in ["en", "ja"], "Pipeline can only be launched with english or japanese language"
+
 
 main_params=load_conf("configs/main.yml",include=True)
 main_params=clean_params(main_params)

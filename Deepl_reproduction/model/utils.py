@@ -8,12 +8,17 @@ import codecs
 import glob
 import youtokentome
 import math
+import sys
 import pandas as pd
 import logging
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
-from Deepl_reproduction.configs.confs import load_conf, clean_params
-from Deepl_reproduction.logs.logs import main
+
+sys.path.insert(0,os.path.join(os.getcwd(),'Deepl_reproduction/configs'))
+sys.path.insert(0,os.path.join(os.getcwd(),'Deepl_reproduction/logs'))
+
+from confs import load_conf, clean_params
+from logs import main
 
 main()
 
@@ -100,9 +105,9 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
     """
 
     src_language="french"
-    target_language="japanese"
+    target_language="english"
     src_short="fr"
-    trg_short="ja"
+    trg_short="en"
     # Read raw files and combine
     src = list()
     trg = list()

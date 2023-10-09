@@ -1,9 +1,13 @@
 import os
 import pandas as pd
 import logging
+import sys
 from sqlalchemy import create_engine
 from google.cloud import bigquery
-from Deepl_reproduction.configs.confs import load_conf, clean_params
+
+sys.path.insert(0,os.path.join(os.getcwd(),'Deepl_reproduction/configs'))
+
+from confs import load_conf, clean_params
 
 main_params = load_conf("configs/main.yml", include=True)
 main_params = clean_params(main_params)
@@ -20,8 +24,9 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "deepl_api_key.json"
 
 all_tables_id_query = """
 SELECT table_id
-FROM `deepl-reprodution.processed_data.__TABLES__`
+FROM `deepl-reprodution-401020.processed_data.__TABLES__`
 """
+
 
 client = bigquery.Client()
 
@@ -40,7 +45,7 @@ db_name = main_params["db_name"]
 
 def get_dataframe_from_bq(
     table_id: str,
-    project_id: str = "deepl-reprodution",
+    project_id: str = "deepl-reprodution-401020",
     dataset_id: str = "processed_data",
     kaggle_length: int = kaggle_length,
 ) -> pd.DataFrame:
