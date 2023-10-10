@@ -179,11 +179,11 @@ def save_best_model(language: str, min_loss: float)->None:
     assert language in ["english", "japanese"], "Language must be either english or japanese"
 
     if language=="english":
-        bucket_name="english_deepl_bucket"
+        bucket_name="english_deepl_bucket_model"
         bucket = client.get_bucket(bucket_name)
         name_model='deepl_english_model_loss_'+str(min_loss).replace(".","_")+'.pth.tar'
     else: 
-        bucket_name="japanese_deepl_bucket"
+        bucket_name="japanese_deepl_bucket_model"
         bucket = client.get_bucket(bucket_name)
         name_model='deepl_japanese_model_loss_'+str(min_loss).replace(".","_")+'.pth.tar'
     blob = bucket.blob(name_model)
@@ -211,9 +211,15 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
     start_data_time = time.time()
     start_step_time = time.time()
 
-    bucket = client.get_bucket('japanese_deepl_bucket')
+    if args.language=="en":
+        bucket = client.get_bucket('english_deepl_bucket_model')
+    elif args.language=="ja":
+        bucket = client.get_bucket('japanese_deepl_bucket_model')
+
     blobs = bucket.list_blobs()
-    file_names = [blob.name for blob in blobs if "bpe" not in blob.name]
+    file_names = [blob.name for blob in blobs if "bpe" not in blob.name\
+                   and "val" not in blob.name and "train" not in blob.name\
+                    and "test" not in blob.name]
 
     if len(file_names)==0:
         min_loss_gcp=5
