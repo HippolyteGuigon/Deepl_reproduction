@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import logging
 import sys
+import concurrent.futures
 from sqlalchemy import create_engine
 from google.cloud import bigquery
 
@@ -89,6 +90,10 @@ def get_dataframe_from_bq(
 
     return loaded_df
 
+def parallel_get_dataframe_from_bq(table_ids, **kwargs):
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        results = list(executor.map(lambda table_id: get_dataframe_from_bq(table_id, **kwargs), table_ids))
+    return results
 
 def load_all_data(
     kaggle_length: int = kaggle_length, language: str = "en"
@@ -166,7 +171,8 @@ def load_all_data(
                 )
             elif id == "processed_kaggle_dataset":
                 logging.info(f"Loading the {id} table")
-                df = get_dataframe_from_bq(id, kaggle_length=kaggle_length)
+                df=parallel_get_dataframe_from_bq(id)
+                #df = get_dataframe_from_bq(id, kaggle_length=kaggle_length)
                 full_data = pd.concat([full_data, df[["french", "english"]]])
             else:
                 continue

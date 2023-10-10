@@ -113,7 +113,6 @@ def prepare_data(data_folder=os.getcwd(), euro_parl=True, common_crawl=True, new
     trg = list()
     files = list()
     
-
     full_data=pd.read_csv(data_folder)
     X_train=full_data.loc[:np.floor(full_data.shape[0]*train_size),:]
     train_shape=X_train.shape[0]

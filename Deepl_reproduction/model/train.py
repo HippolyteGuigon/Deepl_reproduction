@@ -4,11 +4,15 @@ import torch.utils.data
 import time
 import os
 import argparse
+import sys
 from model import Transformer, LabelSmoothedCE
 from dataloader import SequenceLoader
 from utils import *
-from Deepl_reproduction.configs.confs import load_conf, clean_params
-from Deepl_reproduction.logs.logs import main
+
+sys.path.insert(0,os.path.join(os.getcwd(),"Deepl_reproduction/configs"))
+sys.path.insert(0,os.path.join(os.getcwd(),"Deepl_reproduction/logs"))
+from confs import load_conf, clean_params
+from logs import main
 from google.cloud import storage
 
 client = storage.Client.from_service_account_json('deepl_api_key.json', project='deepl-reprodution')
@@ -22,7 +26,7 @@ formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
-    "language",
+    "--language",
     help="The language pipeline to launch",
     nargs="?",
     const="en",
@@ -33,12 +37,40 @@ args = parser.parse_args()
 
 assert args.language in ["en", "ja"], "Pipeline can only be launched with english or japanese language"
 
-
 main_params=load_conf("configs/main.yml",include=True)
 main_params=clean_params(main_params)
 
 # Data parameters
 data_folder = os.path.join(os.getcwd(),"Deepl_reproduction/model")  # folder with data files
+
+if args.language=="en":
+    storage_client = storage.Client()
+    bucket = storage_client.bucket("english_deepl_bucket_model")
+    folder_path=os.path.join(data_folder, "english_data")
+    if not os.path.exists(folder_path):
+        os.mkdir(folder_path)
+    all_english_files=["train.en","train.fr","test.en","test.fr","val.en","val.fr", "bpe.model"]
+    for file in all_english_files:
+        destination_path=os.path.join(folder_path,file)
+        if not os.path.exists(destination_path):
+            blob = bucket.blob(file)
+            logging.info(f"Downloading {file} to {destination_path}...")
+            blob.download_to_filename(destination_path)
+elif args.language=="ja":
+    storage_client = storage.Client()
+    bucket = storage_client.bucket("japanese_deepl_bucket_model")
+    folder_path=os.path.join(data_folder, "japanese_data")
+    if not os.path.exists(folder_path):
+        os.mkdir(folder_path)
+    all_english_files=["train.ja","train.fr","test.ja","test.fr","val.ja","val.fr", "bpe.model"]
+    for file in all_english_files:
+        destination_path=os.path.join(folder_path,file)
+        if not os.path.exists(destination_path):
+            blob = bucket.blob(file)
+            logging.info(f"Downloading {file} to {destination_path}...")
+            blob.download_to_filename(destination_path)
+
+data_folder=folder_path
 
 # Model parameters
 d_model = main_params['d_model']  # size of vectors throughout the transformer model
@@ -76,14 +108,15 @@ def main():
     global checkpoint, step, start_epoch, epoch, epochs
 
     # Initialize data-loaders
+
     train_loader = SequenceLoader(data_folder=data_folder,
                                   source_suffix="fr",
-                                  target_suffix="ja",
+                                  target_suffix=args.language,
                                   split="train",
                                   tokens_in_batch=tokens_in_batch)
     val_loader = SequenceLoader(data_folder=data_folder,
                                 source_suffix="fr",
-                                target_suffix="ja",
+                                target_suffix=args.language,
                                 split="val",
                                 tokens_in_batch=tokens_in_batch)
 
