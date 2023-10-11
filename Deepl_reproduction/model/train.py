@@ -5,6 +5,8 @@ import time
 import os
 import argparse
 import sys
+import mlflow
+import mlflow.pytorch
 from model import Transformer, LabelSmoothedCE
 from dataloader import SequenceLoader
 from utils import *
@@ -19,6 +21,9 @@ client = storage.Client.from_service_account_json('deepl_api_key.json', project=
 
 main()
 
+# Démarrez une expérience MLflow
+mlflow.start_run()
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
@@ -30,6 +35,7 @@ parser.add_argument(
     help="The language pipeline to launch",
     nargs="?",
     const="en",
+    default="en",
     type=str,
 )
 
@@ -227,7 +233,7 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
     """
 
     global min_loss_gcp
-    
+
     model.train()  # training mode enables dropout
 
     # Track some metrics
@@ -296,7 +302,7 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
                                                                         step_time=step_time,
                                                                         data_time=data_time,
                                                                         losses=losses))
-
+                mlflow.log_metric("train_loss", losses.avg, step=step)
                 # Reset step time
                 start_step_time = time.time()
 
@@ -309,10 +315,9 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
                         save_best_model("japanese",min_loss_gcp)
                     elif args.language=="en":
                         save_best_model("english",min_loss_gcp)
-                
         # Reset data time
         start_data_time = time.time()
-
+    mlflow.pytorch.log_model(model, "models")
 
 def validate(val_loader, model, criterion):
     """
@@ -354,3 +359,4 @@ def validate(val_loader, model, criterion):
 
 if __name__ == '__main__':
     main()
+    mlflow.end_run()
