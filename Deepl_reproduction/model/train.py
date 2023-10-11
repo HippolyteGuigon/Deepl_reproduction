@@ -105,7 +105,7 @@ def main():
     """
     Training and validation.
     """
-    global checkpoint, step, start_epoch, epoch, epochs
+    global checkpoint, step, start_epoch, epoch, epochs, min_loss_gcp
 
     # Initialize data-loaders
 
@@ -137,6 +137,7 @@ def main():
                                      eps=epsilon)
 
     elif checkpoint=="resume_gcp":
+        logging.info(f"Resuming training for {args.language} model from best gcp achievement")
         if args.language=="en":
             model_reference='deepl_english_model_loss_'
             bucket = client.get_bucket('english_deepl_bucket_model')
@@ -164,7 +165,7 @@ def main():
                 blob = bucket.blob(min_loss_model_name)
                 blob.download_to_filename(best_model_recover_path)
                 logging.info(f"Succesfully downloaded {min_loss_model_name} in {data_folder}")
-        os.environ["min_loss_gcp"]=str(min_loss_gcp)
+        
         checkpoint = torch.load(best_model_recover_path)
         start_epoch = checkpoint['epoch'] + 1
         print('\nLoaded checkpoint from epoch %d.\n' % start_epoch)
@@ -224,6 +225,9 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
     :param optimizer: optimizer
     :param epoch: epoch number
     """
+
+    global min_loss_gcp
+    
     model.train()  # training mode enables dropout
 
     # Track some metrics
@@ -298,7 +302,7 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
 
             # If this is the last one or two epochs, save checkpoints at regular intervals for averaging
                 save_checkpoint(epoch, model, optimizer, prefix='step' + "last" + "_")
-                if losses.val<float(os.environ["min_loss_gcp"]):
+                if losses.val<min_loss_gcp:
                     logging.warning(f"A new record of {min_loss_gcp:.2f} was hit for the model !")
                     min_loss_gcp=losses.val
                     if args.language=="ja":
