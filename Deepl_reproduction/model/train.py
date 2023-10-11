@@ -136,8 +136,36 @@ def main():
                                      betas=betas,
                                      eps=epsilon)
 
-    else:
-        checkpoint = torch.load(checkpoint)
+    elif checkpoint=="resume_gcp":
+        if args.language=="en":
+            model_reference='deepl_english_model_loss_'
+            bucket = client.get_bucket('english_deepl_bucket_model')
+        elif args.language=="ja":
+            model_reference='deepl_japanese_model_loss_'
+            bucket = client.get_bucket('japanese_deepl_bucket_model')
+
+        blobs = bucket.list_blobs()
+        file_names = [blob.name for blob in blobs if "bpe" not in blob.name\
+                    and "val" not in blob.name and "train" not in blob.name\
+                        and "test" not in blob.name]
+        
+        
+        if len(file_names)==0:
+            min_loss_gcp=5
+        else:
+            loss_gcp=[name.split("_model_loss_")[-1].replace('.pth.tar','') for name in file_names]
+            loss_gcp=[float(loss.replace("_",".")) for loss in loss_gcp]
+            min_loss_gcp=min(loss_gcp)
+            logging.warning(f"The smallest lost found in the bucket is: {min_loss_gcp} and will be taken as reference")
+            min_loss_model_name=model_reference+str(min_loss_gcp).replace(".","_")+".pth.tar"
+            best_model_recover_path=os.path.join(data_folder,min_loss_model_name)
+            if not os.path.exists(best_model_recover_path):
+                logging.info(f"Downloading {min_loss_model_name} in {data_folder}")
+                blob = bucket.blob(min_loss_model_name)
+                blob.download_to_filename(best_model_recover_path)
+                logging.info(f"Succesfully downloaded {min_loss_model_name} in {data_folder}")
+        os.environ["min_loss_gcp"]=str(min_loss_gcp)
+        checkpoint = torch.load(best_model_recover_path)
         start_epoch = checkpoint['epoch'] + 1
         print('\nLoaded checkpoint from epoch %d.\n' % start_epoch)
         model = checkpoint['model']
@@ -168,10 +196,6 @@ def main():
 
         # One epoch's validation
         val_loader.create_batches()
-        #validate(val_loader=val_loader,
-        #         model=model,
-        #         criterion=criterion)
-
         # Save checkpoint
         save_checkpoint(epoch, model, optimizer)
 
@@ -210,24 +234,6 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
     # Starting time
     start_data_time = time.time()
     start_step_time = time.time()
-
-    if args.language=="en":
-        bucket = client.get_bucket('english_deepl_bucket_model')
-    elif args.language=="ja":
-        bucket = client.get_bucket('japanese_deepl_bucket_model')
-
-    blobs = bucket.list_blobs()
-    file_names = [blob.name for blob in blobs if "bpe" not in blob.name\
-                   and "val" not in blob.name and "train" not in blob.name\
-                    and "test" not in blob.name]
-
-    if len(file_names)==0:
-        min_loss_gcp=5
-    else:
-        loss_gcp=[name.split("_model_loss_")[-1].replace('.pth.tar','') for name in file_names]
-        loss_gcp=[float(loss.replace("_",".")) for loss in loss_gcp]
-        min_loss_gcp=min(loss_gcp)
-        logging.warning(f"The smallest lost found in the bucket is: {min_loss_gcp} and will be taken as reference")
 
     # Batches
     for i, (source_sequences, target_sequences, source_sequence_lengths, target_sequence_lengths) in enumerate(
@@ -292,11 +298,13 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
 
             # If this is the last one or two epochs, save checkpoints at regular intervals for averaging
                 save_checkpoint(epoch, model, optimizer, prefix='step' + "last" + "_")
-
-                if losses.val<min_loss_gcp:
+                if losses.val<float(os.environ["min_loss_gcp"]):
                     logging.warning(f"A new record of {min_loss_gcp:.2f} was hit for the model !")
                     min_loss_gcp=losses.val
-                    save_best_model("japanese",min_loss_gcp)
+                    if args.language=="ja":
+                        save_best_model("japanese",min_loss_gcp)
+                    elif args.language=="en":
+                        save_best_model("english",min_loss_gcp)
                 
         # Reset data time
         start_data_time = time.time()

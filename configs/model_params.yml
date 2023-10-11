@@ -8,7 +8,7 @@ d_values : 64
 d_inner : 2048  
 n_layers : 6  
 dropout : 0.1
-checkpoint : 
+checkpoint : "resume_gcp"
 tokens_in_batch : 2000  
 batches_per_step : 25000 
 print_frequency : 5  
