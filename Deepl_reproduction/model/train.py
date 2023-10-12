@@ -292,20 +292,25 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
 
             # Print status
             if step % print_frequency == 0:
+                bleu_score=evaluation(language=args.language)
                 logging.info('Epoch {0}/{1}-----'
                       'Batch {2}/{3}-----'
                       'Step {4}/{5}-----'
                       'Data Time {data_time.val:.3f} ({data_time.avg:.3f})-----'
                       'Step Time {step_time.val:.3f} ({step_time.avg:.3f})-----'
-                      'Loss {losses.val:.4f} ({losses.avg:.4f})'.format(epoch + 1, epochs,
+                      'Loss {losses.val:.4f} ({losses.avg:.4f})-----'
+                      'Bleu score {bleu_score:.4f}-----'.format(epoch + 1, epochs,
                                                                         i + 1, train_loader.n_batches,
                                                                         step, n_steps,
                                                                         step_time=step_time,
                                                                         data_time=data_time,
-                                                                        losses=losses))
+                                                                        losses=losses,
+                                                                        bleu_score=bleu_score))
+                
+                
                 mlflow.log_metric("validation_loss",losses.val)
                 mlflow.log_metric("train_loss", losses.avg, step=step)
-                mlflow.log_metrics(evaluation("BLEU SCORE",language=args.language), step=step)
+                mlflow.log_metric("BLEU SCORE",bleu_score, step=step)
                 # Reset step time
                 start_step_time = time.time()
 
