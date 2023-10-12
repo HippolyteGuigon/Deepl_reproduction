@@ -15,6 +15,7 @@ sys.path.insert(0,os.path.join(os.getcwd(),"Deepl_reproduction/configs"))
 sys.path.insert(0,os.path.join(os.getcwd(),"Deepl_reproduction/logs"))
 from confs import load_conf, clean_params
 from logs import main
+from eval import evaluation
 from google.cloud import storage
 
 client = storage.Client.from_service_account_json('deepl_api_key.json', project='deepl-reprodution')
@@ -204,7 +205,7 @@ def main():
         # One epoch's validation
         val_loader.create_batches()
         # Save checkpoint
-        save_checkpoint(epoch, model, optimizer)
+        save_checkpoint(epoch, model, optimizer, language=args.language)
 
 def save_best_model(language: str, min_loss: float)->None:
     assert language in ["english", "japanese"], "Language must be either english or japanese"
@@ -302,14 +303,16 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
                                                                         step_time=step_time,
                                                                         data_time=data_time,
                                                                         losses=losses))
+                mlflow.log_metric("validation_loss",losses.val)
                 mlflow.log_metric("train_loss", losses.avg, step=step)
+                mlflow.log_metrics(evaluation("BLEU SCORE",language=args.language), step=step)
                 # Reset step time
                 start_step_time = time.time()
 
             # If this is the last one or two epochs, save checkpoints at regular intervals for averaging
                 save_checkpoint(epoch, model, optimizer, prefix='step' + "last" + "_")
                 if losses.val<min_loss_gcp:
-                    logging.warning(f"A new record of {min_loss_gcp:.2f} was hit for the model !")
+                    logging.warning(f"A new record of {losses.val:.2f} was hit for the model !")
                     min_loss_gcp=losses.val
                     if args.language=="ja":
                         save_best_model("japanese",min_loss_gcp)
@@ -318,6 +321,7 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
         # Reset data time
         start_data_time = time.time()
     mlflow.pytorch.log_model(model, "models")
+    
 
 def validate(val_loader, model, criterion):
     """

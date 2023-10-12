@@ -249,7 +249,7 @@ def get_lr(step, d_model, warmup_steps):
     return lr
 
 
-def save_checkpoint(epoch, model, optimizer, prefix=''):
+def save_checkpoint(epoch, model, optimizer, prefix='', language="en"):
     """
     Checkpoint saver. Each save overwrites previous save.
 
@@ -258,11 +258,20 @@ def save_checkpoint(epoch, model, optimizer, prefix=''):
     :param optimizer: optimized
     :param prefix: checkpoint filename prefix
     """
+    assert language in ["en", "ja"], "Language must be either en or ja"
+
     state = {'epoch': epoch,
              'model': model,
              'optimizer': optimizer}
+    
+    if language=="en":
+        prefix="english_"
+        model_path="Deepl_reproduction/model/english_data"
+    elif language=="ja":
+        prefix="japanese_"
+        model_path="Deepl_reproduction/model/japanese_data"
     filename = prefix + 'transformer_checkpoint.pth.tar'
-    torch.save(state, os.path.join("Deepl_reproduction/model",filename))
+    torch.save(state, os.path.join(model_path,filename))
 
 
 def change_lr(optimizer, new_lr):
