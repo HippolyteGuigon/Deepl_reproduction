@@ -1,14 +1,11 @@
 import os
 import pandas as pd
 import logging
-import sys
 import concurrent.futures
 from sqlalchemy import create_engine
 from google.cloud import bigquery
 
-sys.path.insert(0,os.path.join(os.getcwd(),'Deepl_reproduction/configs'))
-
-from confs import load_conf, clean_params
+from Deepl_reproduction.configs.confs import load_conf, clean_params
 
 main_params = load_conf("configs/main.yml", include=True)
 main_params = clean_params(main_params)

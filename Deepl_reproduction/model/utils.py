@@ -8,17 +8,13 @@ import codecs
 import glob
 import youtokentome
 import math
-import sys
 import pandas as pd
 import logging
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 
-sys.path.insert(0,os.path.join(os.getcwd(),'Deepl_reproduction/configs'))
-sys.path.insert(0,os.path.join(os.getcwd(),'Deepl_reproduction/logs'))
-
-from confs import load_conf, clean_params
-from logs import main
+from Deepl_reproduction.configs.confs import load_conf, clean_params
+from Deepl_reproduction.logs.logs import main
 
 main()
 

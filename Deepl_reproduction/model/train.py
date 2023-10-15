@@ -4,17 +4,14 @@ import torch.utils.data
 import time
 import os
 import argparse
-import sys
 import mlflow
 import mlflow.pytorch
 from model import Transformer, LabelSmoothedCE
 from dataloader import SequenceLoader
 from utils import *
 
-sys.path.insert(0,os.path.join(os.getcwd(),"Deepl_reproduction/configs"))
-sys.path.insert(0,os.path.join(os.getcwd(),"Deepl_reproduction/logs"))
-from confs import load_conf, clean_params
-from logs import main
+from Deepl_reproduction.configs.confs import load_conf, clean_params
+from Deepl_reproduction.logs.logs import main
 from eval import evaluation
 from google.cloud import storage
 

@@ -1,12 +1,9 @@
 import os
 import pandas as pd 
-import sys 
 from utils import *
-sys.path.insert(0,os.path.join(os.getcwd(),"Deepl_reproduction/pipeline"))
-sys.path.insert(0,os.path.join(os.getcwd(),"Deepl_reproduction/logs"))
 
-from data_loading import *
-from logs import main
+from Deepl_reproduction.pipeline.data_loading import *
+from Deepl_reproduction.logs.logs import main
 
 main()
 
