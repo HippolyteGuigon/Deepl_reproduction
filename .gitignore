@@ -5,6 +5,7 @@
 *.csv
 *.pt
 *.ja
+*.out
 .git-credentials
 .gitconfig
 .local/
@@ -28,7 +29,9 @@ Deepl_reproduction/model/*.fr
 Deepl_reproduction/model/*.pth.tar
 Deepl_reproduction/model/english_data/*
 Deepl_reproduction/model/japanese_data/*
+mlruns/*
 !requirements.txt
+mlartifacts/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
