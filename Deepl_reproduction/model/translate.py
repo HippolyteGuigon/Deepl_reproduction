@@ -33,7 +33,6 @@ def launch_model(language: str="en")->None:
                 "Deepl_reproduction/model/english_data/english_transformer_checkpoint.pth.tar"
             )
             model = checkpoint["model"].to(device)
-
     elif language=="ja":
         bpe_model_path=glob.glob(os.path.join(os.getcwd(),"Deepl_reproduction/model/japanese_data/bpe*"))[0]
         if not os.path.exists(

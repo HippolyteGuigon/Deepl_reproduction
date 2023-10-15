@@ -4,6 +4,7 @@ import logging
 import codecs
 import os
 import youtokentome
+import sys
 import numpy as np
 from tqdm import tqdm
 from translate import launch_model, translate
@@ -55,8 +56,11 @@ def evaluation(language: str="en")->float:
                     references=[sentence.replace("<BOS>","").replace("<EOS>","").strip().lower() for sentence in references]
                 except RuntimeError:
                     continue
+            
+            bleu_score=sacrebleu.corpus_bleu(hypotheses, [references], lowercase=True).score
+            bleu_score/=100
 
-            return sacrebleu.corpus_bleu(hypotheses, [references], lowercase=True)
+            return bleu_score
 
     elif language=="ja":
         data_folder="Deepl_reproduction/model/japanese_data"
@@ -71,7 +75,6 @@ def evaluation(language: str="en")->float:
             f.write("\n".join(french))
         with open(os.path.join(data_folder,"personnal_test.ja"),"w",encoding="utf-8") as f:
             f.write("\n".join(japanese))
-        
         test_loader = SequenceLoader(data_folder=os.path.join(os.getcwd(),data_folder),
                                     source_suffix="fr",
                                     target_suffix="ja",

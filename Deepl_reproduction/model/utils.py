@@ -271,6 +271,7 @@ def save_checkpoint(epoch, model, optimizer, prefix='', language="en"):
         prefix="japanese_"
         model_path="Deepl_reproduction/model/japanese_data"
     filename = prefix + 'transformer_checkpoint.pth.tar'
+    logging.info(f"Saving {filename} in {model_path}")
     torch.save(state, os.path.join(model_path,filename))
 
 

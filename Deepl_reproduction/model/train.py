@@ -23,6 +23,7 @@ client = storage.Client.from_service_account_json('deepl_api_key.json', project=
 main()
 
 # Démarrez une expérience MLflow
+mlflow.set_tracking_uri("http://127.0.0.1:5000")
 mlflow.start_run()
 
 logger = logging.getLogger()
@@ -315,7 +316,7 @@ def train(train_loader, model, criterion, optimizer, epoch, step):
                 start_step_time = time.time()
 
             # If this is the last one or two epochs, save checkpoints at regular intervals for averaging
-                save_checkpoint(epoch, model, optimizer, prefix='step' + "last" + "_")
+                save_checkpoint(epoch, model, optimizer, prefix='step' + "last" + "_", language=args.language)
                 if losses.val<min_loss_gcp:
                     logging.warning(f"A new record of {losses.val:.2f} was hit for the model !")
                     min_loss_gcp=losses.val
