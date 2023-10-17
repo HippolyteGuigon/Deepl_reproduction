@@ -20,12 +20,12 @@ def launch_model(language: str="en")->None:
     global bpe_model_path, bpe_model, model_path, checkpoint, model
 
     if language=="en":
-        bpe_model_path=glob.glob(os.path.join(os.getcwd(),"Deepl_reproduction/model/english_data/bpe*"))[0]
+        bpe_model_path=os.path.join(os.getcwd(),"Deepl_reproduction/model/bpe_english.model")
         if not os.path.exists(
         "Deepl_reproduction/model/english_data/english_transformer_checkpoint.pth.tar"
     ):
             
-            model_path = glob.glob("Deepl_reproduction/model/english_data/*.pth.tar")[0]
+            model_path = os.path.join(os.getcwd(),"Deepl_reproduction/model/finalized_english_model.pth.tar")
             checkpoint = torch.load(model_path)
             model = checkpoint["model"].to(device)
         else:
@@ -34,12 +34,12 @@ def launch_model(language: str="en")->None:
             )
             model = checkpoint["model"].to(device)
     elif language=="ja":
-        bpe_model_path=glob.glob(os.path.join(os.getcwd(),"Deepl_reproduction/model/japanese_data/bpe*"))[0]
+        bpe_model_path=os.path.join(os.getcwd(),"Deepl_reproduction/model/bpe_japanese.model")
         if not os.path.exists(
         "Deepl_reproduction/model/english_data/japanese_transformer_checkpoint.pth.tar"
     ):
             
-            model_path = glob.glob("Deepl_reproduction/model/japanese_data/*.pth.tar")[0]
+            model_path = os.path.join(os.getcwd(),"Deepl_reproduction/model/deepl_japanese_model_loss_3_7730557918548584.pth.tar")
             checkpoint = torch.load(model_path)
             model = checkpoint["model"].to(device)
         else:
@@ -66,6 +66,7 @@ def translate(source_sequence, language: str="en",beam_size=4, length_norm_coeff
 
     assert language in ["en", "ja"], "Traduction is only available for english and japanese !"
 
+    source_sequence=source_sequence.lower()
     launch_model(language=language)
     
     with torch.no_grad():

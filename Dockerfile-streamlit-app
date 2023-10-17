@@ -12,10 +12,10 @@ COPY . /app
 
 RUN mkdir model_bucket/
 
-RUN gsutil cp gs://english_deepl_bucket/bpe_english.model /app/Deepl_reproduction/model/
-RUN gsutil cp gs://english_deepl_bucket/deepl_english_model_loss_2_881014585494995.pth.tar /app/Deepl_reproduction/model/
-RUN gsutil cp gs://japanese_deepl_bucket/bpe_japanese.model /app/Deepl_reproduction/model/
-RUN gsutil cp gs://japanese_deepl_bucket/deepl_japanese_model_loss_3_7730557918548584.pth.tar /app/Deepl_reproduction/model/
+RUN gsutil cp gs://english_deepl_bucket_model/bpe.model /app/Deepl_reproduction/model/bpe_english.model
+RUN gsutil cp gs://english_deepl_bucket_model/finalized_english_model.pth.tar /app/Deepl_reproduction/model/
+RUN gsutil cp gs://japanese_deepl_bucket_model/bpe.model /app/Deepl_reproduction/model/bpe_japanese.model
+RUN gsutil cp gs://japanese_deepl_bucket_model/deepl_japanese_model_loss_3_7730557918548584.pth.tar /app/Deepl_reproduction/model/
 
 RUN python3 setup.py install
 RUN pip3 install --upgrade pip

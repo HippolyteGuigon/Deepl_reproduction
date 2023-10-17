@@ -48,9 +48,9 @@ if st.button("Translate"):
     from Deepl_reproduction.model.translate import translate
 
     if selection=="English":
-        translation, _ = translate(texte_a_traduire,language="english")
+        translation, _ = translate(texte_a_traduire,language="en")
     elif selection=="Japanese":
-        translation, _ = translate(texte_a_traduire,language="japanese")
+        translation, _ = translate(texte_a_traduire,language="ja")
 
     translation = translation.replace("<BOS>", "").replace("<EOS>", "").strip()
     translation = translation.capitalize()
