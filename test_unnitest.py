@@ -118,7 +118,7 @@ class Test(unittest.TestCase):
         """
 
         sys.path.insert(0, "Deepl_reproduction")
-        bucket = client.get_bucket("english_deepl_bucket")
+        bucket = client.get_bucket("english_deepl_bucket_model")
         blobs = bucket.list_blobs()
         file_names = [blob.name for blob in blobs if "bpe" not in blob.name]
         loss_gcp = [
