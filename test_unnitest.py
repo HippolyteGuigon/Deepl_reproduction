@@ -16,6 +16,7 @@ client = storage.Client.from_service_account_json(
 
 sys.path.insert(0, "./Deepl_reproduction")
 
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="deepl_api_key.json"
 
 class Test(unittest.TestCase):
     """
