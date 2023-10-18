@@ -168,8 +168,8 @@ def load_all_data(
                 )
             elif id == "processed_kaggle_dataset":
                 logging.info(f"Loading the {id} table")
-                df=parallel_get_dataframe_from_bq(id)
-                #df = get_dataframe_from_bq(id, kaggle_length=kaggle_length)
+                #df=parallel_get_dataframe_from_bq(id)
+                df = get_dataframe_from_bq(id, kaggle_length=kaggle_length)
                 full_data = pd.concat([full_data, df[["french", "english"]]])
             else:
                 continue
