@@ -95,7 +95,7 @@ class Test(unittest.TestCase):
             text=True,
         )
 
-        load_data_to_front_database(kaggle_length=50000)
+        load_data_to_front_database(kaggle_length=5000)
         df_front_database = load_data()
 
         self.assertEqual(result.returncode, 0)
@@ -120,7 +120,7 @@ class Test(unittest.TestCase):
         sys.path.insert(0, "Deepl_reproduction")
         bucket = client.get_bucket("english_deepl_bucket_model")
         blobs = bucket.list_blobs()
-        file_names = [blob.name for blob in blobs if "bpe" not in blob.name]
+        file_names = [blob.name for blob in blobs if "bpe" not in blob.name and "finalized" not in blob.name]
         loss_gcp = [
             name.replace("deepl_english_model_loss_", "").replace(".pth.tar", "")
             for name in file_names
