@@ -56,7 +56,7 @@ def load_model(language: str="english", load_gcp: bool=True, load_best=True, **k
             blobs = bucket.list_blobs()
             file_names = [blob.name for blob in blobs if "bpe"  not in blob.name]
             loss_gcp=[name.split("model_loss_")[-1].replace('.pth.tar','') for name in file_names]
-            loss_gcp=[float(loss.replace("_",".")) for loss in loss_gcp]
+            loss_gcp=[float(loss.replace("_",".")) for loss in loss_gcp if "finalized" not in loss]
             min_loss_gcp=min(loss_gcp)
             best_model_name=[name for name in file_names if str(min_loss_gcp).replace(".", "_") in name][0]
             final_save_path=os.path.join(os.getcwd(),save_path,best_model_name)
