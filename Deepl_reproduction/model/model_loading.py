@@ -41,15 +41,15 @@ def load_model(language: str="english", load_gcp: bool=True, load_best=True, **k
 
     if load_gcp:
         if language=="english":
-            bucket = client.get_bucket('english_deepl_bucket')
+            bucket = client.get_bucket('english_deepl_bucket_model')
             if not os.path.exists(os.path.join(save_path,"bpe_english.model")):
-                blob = bucket.blob("bpe_english.model")
+                blob = bucket.blob("bpe.model")
                 blob.download_to_filename(os.path.join(save_path,"bpe_english.model"))
 
         elif language=="japanese":
-            bucket = client.get_bucket('japanese_deepl_bucket')
+            bucket = client.get_bucket('japanese_deepl_bucket_model')
             if not os.path.exists(os.path.join(save_path,"bpe_japanese.model")):
-                blob = bucket.blob("bpe_japanese.model")
+                blob = bucket.blob("bpe.model")
                 blob.download_to_filename(os.path.join(save_path,"bpe_japanese.model"))
 
         if load_best:
